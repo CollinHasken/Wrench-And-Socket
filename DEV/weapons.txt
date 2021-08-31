@@ -1,0 +1,60 @@
+burst pistol (projectile):
+	single shot
+	rapid fire
+	triple shot
+enforcer (shot):
+	big double barrel
+	wide electric spread
+Shatterbomb (grenade):
+	fast arc
+	over shield/cover
+	show line trajectory when half pulled
+	halo stickies
+	sticks and can throw enemies backwards, then explode
+	enemies corpse explodes
+Fugis (AI/grenade):
+	spawns AI that shoots
+negatron (beam):
+	charge and then beam for a few seconds
+	goes through enemies
+ricochet (projectile):
+	hit enemy, then bounces around to hit multiple
+topiary (turret):
+	Water sprinkler that turns enemies into shrubs
+void repulser (shield/blast):
+	hold for shield, release to push back
+drillhound (shoot):
+	goes through ground?
+	trajectory
+buzz blades(projectile):
+	shoot at enemy
+	bounces and arc around to hit multiple times
+warmonger (projectile):
+	rocket launcher
+	breaks into multiple
+glove of doom (grenade/AI):
+	grenade, spawn multiple ai bots to melee
+headhunter (projectile):
+	sniper
+	zoom levels
+	crit areas
+bombardier (turret):
+	stays in air, flys around
+	shoots rockets
+lightning rod (projectile):
+	shoot rods into them
+	some kind of aiming assit, sticks to sockets
+	lightning propagates
+cold snap (grenade):
+	freezes enemies
+	increased melee damage?
+blackhole storm (projectile gatling):
+	gatling gun
+ryno 8 (projectile):
+	teleport big item to fall on target
+	big damage
+Bouncer (grenade):
+	split into multiple
+	bounce around, keep exploding
+pixelizer (shotgun):
+	adds pixel shader
