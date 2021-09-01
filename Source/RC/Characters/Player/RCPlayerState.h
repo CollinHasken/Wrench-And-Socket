@@ -30,6 +30,8 @@ class RC_API ARCPlayerState : public APlayerState
 
 public:
 
+	virtual void Serialize(FArchive& Ar) override;
+
 	void SaveForLevelTransition(class URCLevelTransitionSave* SaveGame);
 	void LoadForLevelTransition(const class URCLevelTransitionSave* SaveGame);
 

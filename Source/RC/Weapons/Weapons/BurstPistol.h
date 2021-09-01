@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-#include "RC/Weapons/Weapons/BaseWeapon.h"
+#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
 
 #include "BurstPistol.generated.h"
 
@@ -12,7 +12,7 @@
  * 
  */
 UCLASS(Abstract, Blueprintable)
-class RC_API ABurstPistol : public ABaseWeapon
+class RC_API ABurstPistol : public ABasePlayerWeapon
 {
 	GENERATED_BODY()
 

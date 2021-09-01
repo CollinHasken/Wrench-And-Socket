@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "RC/Weapons/Weapons/BaseWeapon.h"
+#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
 #include "Enforcer.generated.h"
 
 /**
  * 
  */
 UCLASS(Abstract, Blueprintable)
-class RC_API AEnforcer : public ABaseWeapon
+class RC_API AEnforcer : public ABasePlayerWeapon
 {
 	GENERATED_BODY()
 

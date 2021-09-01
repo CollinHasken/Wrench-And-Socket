@@ -6,6 +6,17 @@
 #include "RC/Characters/Player/RCCharacter.h"
 
 
+void ARCPlayerState::Serialize(FArchive& Ar)
+{
+	Super::Serialize(Ar);
+
+	if (Ar.IsSaveGame())
+	{
+		UClass* Class = ARCPlayerState::StaticClass();
+		Class->SerializeTaggedProperties(Ar, (uint8*)this, Class, nullptr);
+	}
+}
+
 void ARCPlayerState::SaveForLevelTransition(URCLevelTransitionSave* SaveGame)
 {
 	ASSERT_RETURN(SaveGame != nullptr);
@@ -23,6 +34,11 @@ void ARCPlayerState::SaveForLevelTransition(URCLevelTransitionSave* SaveGame)
 
 void ARCPlayerState::LoadForLevelTransition(const URCLevelTransitionSave* SaveGame)
 {
+	// Convert binary array back into actor's variables
+	FMemoryReader MemReader(SaveGame->SavedPlayer.PlayerStateByteData);
+	FSaveGameArchive Ar(MemReader, true);
+	Serialize(Ar);
+
 	ARCCharacter* ControlledCharacter = Cast<ARCCharacter>(GetPawn());
 	ASSERT_RETURN(ControlledCharacter != nullptr);
 

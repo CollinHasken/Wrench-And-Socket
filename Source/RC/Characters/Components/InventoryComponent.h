@@ -20,7 +20,7 @@ struct FLoadoutSlotInfo
 	EInventorySlot Slot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Loadout)
-	TSubclassOf<class ABaseWeapon> Weapon;
+	TSubclassOf<class ABasePlayerWeapon> Weapon;
 };
 
 USTRUCT(BlueprintType)
@@ -39,14 +39,10 @@ class RC_API UInventoryComponent : public UActorComponent
 
 public:	
 	static constexpr uint8 MAX_WEAPONS = static_cast<uint8>(EInventorySlot::NUM_SLOTS);
+	static constexpr uint8 MAX_QUICKSLOTS = static_cast<uint8>(EQuickSlot::NUM_SLOTS);
 
-	// Sets default values for this component's properties
-	UInventoryComponent();
-
+	/** Save the inventory */
 	friend FArchive& operator<<(FArchive& Ar, UInventoryComponent& SObj);
-
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	/** 
 	 * Assign a weapon to the slot. If that slot is currently equipped, it'll swap it out
@@ -55,7 +51,7 @@ public:
 	 * @Param WeaponClass The weapon class to assign
 	 */
 	UFUNCTION(BlueprintCallable)
-	void AssignSlot(EInventorySlot Slot, TSubclassOf<class ABaseWeapon> WeaponClass);
+	void AssignSlot(EInventorySlot Slot, TSubclassOf<class ABasePlayerWeapon> WeaponClass);
 
 	/**
 	 * Equip a slot as the current weapon. If there's no weapon in that slot, then it won't equip
@@ -67,6 +63,25 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool EquipSlot(EInventorySlot NewSlot);
 
+	/**
+	 * Equip a slot as the current weapon through the quick slot. If there's no inventory slot assigned to that quick slot or no weapon in that slot, then it won't equip
+	 *
+	 * @Param QuickSlot The quick slot to switch to
+	 *
+	 * @Return True if the weapon was properly equipped
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool EquipQuickSlot(EQuickSlot QuickSlot);
+
+	/**
+	 * Equip a weapon to a quickslot by mapping the inventory slot
+	 *
+	 * @Param Quickslot		The quickslot to map for
+	 * @Param InventorySlot The slot of the weapon to map to
+	 */
+	UFUNCTION(BlueprintCallable)
+	void EquipToQuickSlot(EQuickSlot QuickSlot, EInventorySlot InventorySlot);
+
 	/** Equip the next slot numerically */
 	void EquipNextSlot();
 
@@ -75,18 +90,14 @@ public:
 
 	// Return the currently equipped weapon
 	UFUNCTION(BlueprintCallable)
-	class ABaseWeapon* GetEquippedWeapon() { return EquippedWeapon; }
-
-	/** Test weapon */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Test)
-	TSubclassOf<class ABaseWeapon> TestWeaponClass;
+	class ABasePlayerWeapon* GetEquippedWeapon() { return EquippedWeapon; }
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 private:
-	class ABaseWeapon* SpawnSlot(EInventorySlot NewSlot);
+	class ABasePlayerWeapon* SpawnSlot(EInventorySlot NewSlot);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Loadout, meta = (AllowPrivateAccess = "true"))
 	FLoadout DefaultLoadout;
@@ -94,11 +105,14 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Loadout, meta = (AllowPrivateAccess = "true"))
 	EInventorySlot DefaultSlot;
 
-	TSubclassOf<class ABaseWeapon> WeaponClasses[MAX_WEAPONS] = { NULL };
+	UPROPERTY(SaveGame)
+	TSubclassOf<class ABasePlayerWeapon> WeaponClasses[MAX_WEAPONS] = { NULL };
 
+	UPROPERTY(SaveGame)
+	EInventorySlot QuickSlots[MAX_QUICKSLOTS] = { EInventorySlot::NUM_SLOTS, EInventorySlot::NUM_SLOTS, EInventorySlot::NUM_SLOTS, EInventorySlot::NUM_SLOTS };
+
+	UPROPERTY(SaveGame)
 	EInventorySlot EquippedSlot = EInventorySlot::NUM_SLOTS;
-	class ABaseWeapon* EquippedWeapon = nullptr;
 
-public:
-	float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
+	class ABasePlayerWeapon* EquippedWeapon = nullptr;
 };

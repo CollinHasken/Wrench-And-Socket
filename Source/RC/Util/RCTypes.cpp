@@ -3,11 +3,11 @@
 
 #include "RCTypes.h"
 
-#include "RC/Weapons/Weapons/BaseWeapon.h"
+#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
 
 void FWeaponData::GrantDamageXP(float XP)
 {
-	ABaseWeapon* Weapon = CurrentWeapon.Get();
+	ABasePlayerWeapon* Weapon = CurrentWeapon.Get();
 	if (Weapon != nullptr)
 	{
 		Weapon->GrantDamageXP(XP);

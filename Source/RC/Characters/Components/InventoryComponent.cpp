@@ -4,21 +4,10 @@
 #include "Camera/CameraComponent.h"
 
 #include "RC/Characters/BaseCharacter.h"
-#include "RC/Weapons/Weapons/BaseWeapon.h"
+#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
 #include "RC/Debug/Debug.h"
 #include "RC/Characters/Player/RCCharacter.h"
 #include "RC/Characters/Player/RCPlayerState.h"
-
-
-// Sets default values for this component's properties
-UInventoryComponent::UInventoryComponent()
-{
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
-}
 
 FArchive& operator<<(FArchive& Ar, UInventoryComponent& SObj)
 {
@@ -26,8 +15,6 @@ FArchive& operator<<(FArchive& Ar, UInventoryComponent& SObj)
 	{
 		UClass* Class = UInventoryComponent::StaticClass();
 		Class->SerializeTaggedProperties(Ar, (uint8*)&SObj, Class, nullptr);
-
-
 	}
 	return Ar;
 }
@@ -43,20 +30,12 @@ void UInventoryComponent::BeginPlay()
 		AssignSlot(LoadoutSlotInfo.Slot, LoadoutSlotInfo.Weapon);
 	}
 
-	EquipSlot(DefaultSlot);
-}
-
-
-// Called every frame
-void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
+	// Either equipped the saved slot or equip the default
+	EquipSlot(EquippedSlot != EInventorySlot::NUM_SLOTS ? EquippedSlot : DefaultSlot);
 }
 
 // Assign a weapon to the slot. If that slot is currently equipped, it'll swap it out
-void UInventoryComponent::AssignSlot(EInventorySlot Slot, TSubclassOf<class ABaseWeapon> WeaponClass)
+void UInventoryComponent::AssignSlot(EInventorySlot Slot, TSubclassOf<ABasePlayerWeapon> WeaponClass)
 {
 	WeaponClasses[static_cast<uint8>(Slot)] = WeaponClass;
 
@@ -75,6 +54,12 @@ void UInventoryComponent::AssignSlot(EInventorySlot Slot, TSubclassOf<class ABas
 // Equip a slot as the current weapon. If there's no weapon in that slot, then it won't equip
 bool UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 {
+	// Equipping invalid slot
+	if (NewSlot == EInventorySlot::NUM_SLOTS)
+	{
+		return false;
+	}
+
 	// Equipping the same slot
 	if (NewSlot == EquippedSlot)
 	{
@@ -82,7 +67,7 @@ bool UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 	}
 
 	// New slot has no weapon
-	TSubclassOf<ABaseWeapon>& WeaponClass = WeaponClasses[static_cast<uint8>(NewSlot)];
+	TSubclassOf<ABasePlayerWeapon>& WeaponClass = WeaponClasses[static_cast<uint8>(NewSlot)];
 	if (WeaponClass == NULL)
 	{
 		return false;
@@ -141,10 +126,22 @@ bool UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 	return true;
 }
 
+bool UInventoryComponent::EquipQuickSlot(EQuickSlot QuickSlot)
+{
+	return EquipSlot(QuickSlots[static_cast<uint8>(QuickSlot)]);
+}
+
+/** Equip a weapon to a quickslot by mapping the inventory slot */
+void UInventoryComponent::EquipToQuickSlot(EQuickSlot QuickSlot, EInventorySlot InventorySlot)
+{
+	QuickSlots[static_cast<uint8>(QuickSlot)] = InventorySlot;
+}
+
 /** Equip the next slot numerically */
 void UInventoryComponent::EquipNextSlot()
 {
-	for (uint8 InventorySlotIndex = (static_cast<uint8>(EquippedSlot) + 1) % static_cast<uint8>(EInventorySlot::NUM_SLOTS); InventorySlotIndex != static_cast<uint8>(EquippedSlot); InventorySlotIndex = (InventorySlotIndex + 1) % static_cast<uint8>(EInventorySlot::NUM_SLOTS))
+	uint8 InventorySlotIndex = (static_cast<uint8>(EquippedSlot) + 1) % static_cast<uint8>(EInventorySlot::NUM_SLOTS);
+	for (; InventorySlotIndex != static_cast<uint8>(EquippedSlot); InventorySlotIndex = (InventorySlotIndex + 1) % static_cast<uint8>(EInventorySlot::NUM_SLOTS))
 	{
 		if (WeaponClasses[InventorySlotIndex] == NULL)
 		{
@@ -159,7 +156,8 @@ void UInventoryComponent::EquipNextSlot()
 /** Equip the previous slot numerically */
 void UInventoryComponent::EquipPreviousSlot()
 {
-	for (uint8 InventorySlotIndex = static_cast<uint8>(EquippedSlot) == 0 ? static_cast<uint8>(EInventorySlot::NUM_SLOTS) - 1 : (static_cast<uint8>(EquippedSlot) - 1); InventorySlotIndex != static_cast<uint8>(EquippedSlot); InventorySlotIndex = InventorySlotIndex == 0 ? static_cast<uint8>(EInventorySlot::NUM_SLOTS) - 1 : InventorySlotIndex - 1)
+	uint8 InventorySlotIndex = static_cast<uint8>(EquippedSlot) == 0 ? static_cast<uint8>(EInventorySlot::NUM_SLOTS) - 1 : (static_cast<uint8>(EquippedSlot) - 1);
+	for (; InventorySlotIndex != static_cast<uint8>(EquippedSlot); InventorySlotIndex = InventorySlotIndex == 0 ? static_cast<uint8>(EInventorySlot::NUM_SLOTS) - 1 : InventorySlotIndex - 1)
 	{
 		if (InventorySlotIndex == -1)
 		{
@@ -178,11 +176,11 @@ void UInventoryComponent::EquipPreviousSlot()
 
 
 // Spawn the weapon from the slot
-ABaseWeapon* UInventoryComponent::SpawnSlot(EInventorySlot NewSlot)
+ABasePlayerWeapon* UInventoryComponent::SpawnSlot(EInventorySlot NewSlot)
 {
 	ASSERT_RETURN_VALUE(NewSlot != EInventorySlot::NUM_SLOTS, nullptr, "Trying to equip invalid slot");
 
-	TSubclassOf<ABaseWeapon>& WeaponClass = WeaponClasses[static_cast<uint8>(NewSlot)];
+	TSubclassOf<ABasePlayerWeapon>& WeaponClass = WeaponClasses[static_cast<uint8>(NewSlot)];
 	ASSERT_RETURN_VALUE(WeaponClass != NULL, nullptr, "Trying to equip slot that has no weapon");
 
 	UWorld* World = GetWorld();
@@ -199,5 +197,5 @@ ABaseWeapon* UInventoryComponent::SpawnSlot(EInventorySlot NewSlot)
 
 	FTransform SpawnTransform = FTransform::Identity;
 
-	return World->SpawnActor<ABaseWeapon>(WeaponClasses[static_cast<uint8>(NewSlot)], SpawnTransform, SpawnParams);	
+	return World->SpawnActor<ABasePlayerWeapon>(WeaponClasses[static_cast<uint8>(NewSlot)], SpawnTransform, SpawnParams);
 }

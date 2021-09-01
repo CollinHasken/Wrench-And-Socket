@@ -30,18 +30,15 @@ void URCLevelTransitionSave::SavePlayer(ARCCharacter* Player)
 
 	// Pass the array to fill with data from Actor
 	FMemoryWriter MemWriter(SavedPlayer.ByteData);
-
 	FSaveGameArchive Ar(MemWriter, true);
-	// Converts Actor's SaveGame UPROPERTIES into binary array
 	Player->Serialize(Ar);
 }
 
 void URCLevelTransitionSave::LoadPlayer(ARCCharacter* Player) const
 {
-	FMemoryReader MemReader(SavedPlayer.ByteData);
-
-	FSaveGameArchive Ar(MemReader, true);
 	// Convert binary array back into actor's variables
+	FMemoryReader MemReader(SavedPlayer.ByteData);
+	FSaveGameArchive Ar(MemReader, true);
 	Player->Serialize(Ar);
 
 	//ISaveGameInterface::Execute_OnActorLoaded(Actor);

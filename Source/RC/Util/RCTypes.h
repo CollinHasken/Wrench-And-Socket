@@ -34,7 +34,17 @@ enum class EInventorySlot : uint8
 
 	NUM_SLOTS	UMETA(Hidden)
 };
-static constexpr uint8 MAX_INVENTORY_WEAPONS = static_cast<uint8>(EInventorySlot::NUM_SLOTS);
+
+UENUM(BlueprintType, Category = "Inventory")
+enum class EQuickSlot : uint8
+{
+	Slot1 = 0	UMETA(DisplayName = "Slot 1"),
+	Slot2		UMETA(DisplayName = "Slot 2"),
+	Slot3		UMETA(DisplayName = "Slot 3"),
+	Slot4		UMETA(DisplayName = "Slot 4"),
+
+	NUM_SLOTS	UMETA(Hidden)
+};
 
 USTRUCT(BlueprintType)
 struct FDamageRequestParams
@@ -116,5 +126,5 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = Weapon)
 	uint8 CurrentLevelIndex = 0;
 
-	TWeakObjectPtr<class ABaseWeapon> CurrentWeapon = nullptr;
+	TWeakObjectPtr<class ABasePlayerWeapon> CurrentWeapon = nullptr;
 };

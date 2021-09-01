@@ -14,7 +14,7 @@
 #include "RC/Debug/Debug.h"
 #include "RC/Characters/Components/InventoryComponent.h"
 #include "RC/Characters/Player/RCPlayerState.h"
-#include "RC/Weapons/Weapons/BaseWeapon.h"
+#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ARCCharacter
@@ -174,10 +174,10 @@ void ARCCharacter::Shoot(float Value)
 {	
 	ASSERT_RETURN(Inventory != nullptr);
 
-	ABaseWeapon* EquippedWeapon = Inventory->GetEquippedWeapon();
+	ABasePlayerWeapon* EquippedWeapon = Inventory->GetEquippedWeapon();
 	if (EquippedWeapon == nullptr) {
 		return;
 	}
 
-	EquippedWeapon->UpdateTriggerStatus(ABaseWeapon::TriggerValueToStatus(Value));
+	EquippedWeapon->UpdateTriggerStatus(ABasePlayerWeapon::TriggerValueToStatus(Value));
 }
