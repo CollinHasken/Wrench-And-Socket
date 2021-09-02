@@ -10,10 +10,12 @@
 UENUM(BlueprintType, Category = "AI")
 enum class EAIState : uint8
 {
-	IDLE	UMETA(DisplayName = "Idle"),
-	PATROL	UMETA(DisplayName = "Patrol"),
-	SEARCH	UMETA(DisplayName = "Search"),
-	CHASE	UMETA(DisplayName = "Chase"),
+	Idle		UMETA(DisplayName = "Idle"),
+	Patrol		UMETA(DisplayName = "Patrol"),
+	Search		UMETA(DisplayName = "Search"),
+	Chase		UMETA(DisplayName = "Chase"),
+
+	NUM_STATES	UMETA(Hidden)
 };
 
 UENUM(BlueprintType, Category = "Inventory")

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BehaviorTree/Tasks/BTTask_BlackboardBase.h"
+#include "BehaviorTree/BTTaskNode.h"
 
 #include "RC/Util/RCTypes.h"
 
@@ -13,7 +13,7 @@
  * 
  */
 UCLASS()
-class RC_API UBTTask_RequestStateChange : public UBTTask_BlackboardBase
+class RC_API UBTTask_RequestStateChange : public UBTTaskNode
 {
 	GENERATED_BODY()
 

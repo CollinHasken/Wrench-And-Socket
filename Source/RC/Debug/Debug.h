@@ -5,10 +5,13 @@
 #include "GenericPlatform/GenericPlatformMisc.h"
 #include "Logging/LogMacros.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogAI, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogAISpline, Log, All);
 
 bool PrintAssertMessage(const char* Cond, const char* File, int Line);
 bool PrintAssertMessage(const char* Cond, const char* File, int Line, const char* Format, ...);
+
+#define stringify(name) #name
 
 #define ASSERT(Cond, ...)															\
 	if (!(Cond)) {																	\
@@ -61,6 +64,7 @@ bool PrintAssertMessage(const char* Cond, const char* File, int Line, const char
 
 #else
 
+#define stringify(name)
 #define ASSERT(...)
 #define ASSERT_RETURN(Cond, ...) if (!(Cond)) { return; }
 #define ASSERT_RETURN_VALUE(Cond, RV, ...) if (!(Cond)) { return RV; }

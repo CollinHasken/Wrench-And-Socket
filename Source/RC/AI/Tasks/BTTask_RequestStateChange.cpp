@@ -7,23 +7,33 @@
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Enum.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "RC/AI/BaseAIController.h"
 #include "RC/Util/RCTypes.h"
 #include "RC/Debug/Debug.h"
-#include "RC/AI/SplineFollowerComponent.h"
 
 UBTTask_RequestStateChange::UBTTask_RequestStateChange(const FObjectInitializer& ObjectInitializer)
 {
 	NodeName = TEXT("Request State Change");
-
-	BlackboardKey.AddEnumFilter(this, GET_MEMBER_NAME_CHECKED(UBTTask_RequestStateChange, BlackboardKey), StaticEnum<EAIState>());
 }
 
 EBTNodeResult::Type UBTTask_RequestStateChange::ExecuteTask(UBehaviorTreeComponent& OwnerComponent, uint8* NodeMemory)
 {
-	UBlackboardComponent* BlackBoardComponent = OwnerComponent.GetBlackboardComponent();
-	ASSERT_RETURN_VALUE(BlackBoardComponent != nullptr, EBTNodeResult::Failed);
+	ABaseAIController* AIController = Cast<ABaseAIController>(OwnerComponent.GetAIOwner());
+	ASSERT_RETURN_VALUE(AIController != nullptr, EBTNodeResult::Failed);
 
-	BlackBoardComponent->SetValue<UBlackboardKeyType_Enum>(BlackboardKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(RequestedState));
+	EAIStateChangeResult Result = AIController->RequestState(RequestedState);
 
+	switch (Result)
+	{
+		case EAIStateChangeResult::Failed:
+			return EBTNodeResult::Failed;
+		case EAIStateChangeResult::InProgress:
+			// Set the requested state and process
+			WaitForMessage(OwnerComponent, ABaseAIController::AIMessage_StateChangeFinished);
+			return EBTNodeResult::InProgress;
+		case EAIStateChangeResult::Succeeded:
+		default:
+			break;
+	}
 	return EBTNodeResult::Succeeded;
 }

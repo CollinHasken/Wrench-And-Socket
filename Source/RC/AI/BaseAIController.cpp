@@ -20,13 +20,18 @@
 #include "RC/AI/BlackBoardKeys.h"
 #include "RC/Debug/Debug.h"
 #include "RC/Characters/Player/RCCharacter.h"
-#include "RC/Util/RCTypes.h"
 
+const FName ABaseAIController::AIMessage_StateChangeFinished = TEXT("StateChangeFinished");
 
 ABaseAIController::ABaseAIController(const FObjectInitializer& ObjectInitializer/* = FObjectInitializer::Get()*/)
 {
 	BehaviorTreeComponent = ObjectInitializer.CreateDefaultSubobject<UBehaviorTreeComponent>(this, TEXT("BehaviorTreeComponent"));
 	BlackboardComponent = ObjectInitializer.CreateDefaultSubobject<UBlackboardComponent>(this, TEXT("BlackboardComponent"));
+
+#if WITH_EDITOR
+	CurrentStateKey.AddEnumFilter(this, GET_MEMBER_NAME_CHECKED(ABaseAIController, CurrentStateKey), StaticEnum<EAIState>());
+	RequestedStateKey.AddEnumFilter(this, GET_MEMBER_NAME_CHECKED(ABaseAIController, RequestedStateKey), StaticEnum<EAIState>());
+#endif
 
 	SetupPerception();
 }
@@ -37,7 +42,10 @@ void ABaseAIController::BeginPlay()
 
 	ASSERT_RETURN(BehaviorTree != nullptr);
 	ASSERT_RETURN(RunBehaviorTree(BehaviorTree));
-	//BehaviorTreeComponent->StartTree(*BehaviorTree);
+
+	CurrentState = DefaultState;
+
+	SetupStateChangeFunctions();
 }
 
 void ABaseAIController::OnPossess(APawn* const PossessedPawn)
@@ -51,9 +59,92 @@ void ABaseAIController::OnPossess(APawn* const PossessedPawn)
 	}
 }
 
+/** Return the blackboard asset */
+UBlackboardData* ABaseAIController::GetBlackboardAsset() const
+{
+	ASSERT_RETURN_VALUE(BlackboardComponent != nullptr, nullptr);
+	if (BlackboardComponent->HasValidAsset())
+	{
+		return BlackboardComponent->GetBlackboardAsset();
+	}
+	return BehaviorTree != nullptr ? BehaviorTree->GetBlackboardAsset() : nullptr;
+}
+
+/** Add the new state transition functions to the map */
+void ABaseAIController::AddStateChangeFunctions(const TStateChangeFunctionMap& Functions)
+{
+	for (const TPair<EAIState, TNewStateChangeFunctionMap> NewFunctionMapPair : Functions)
+	{
+		// If there's an existing map for a state, then we need to add the new transitions to that map
+		TNewStateChangeFunctionMap* CurrentFunctionMap = StateChangeFunctions.Find(NewFunctionMapPair.Key);
+		if (CurrentFunctionMap != nullptr)
+		{
+			CurrentFunctionMap->Append(NewFunctionMapPair.Value);
+		}
+		else
+		{
+			// Add map for new states
+			StateChangeFunctions.Add(NewFunctionMapPair);
+		}
+	}
+}
+
+/** Create new state transition function map */
+void ABaseAIController::SetupStateChangeFunctions()
+{
+	TNewStateChangeFunctionMap IdleMap;	
+	IdleMap.Emplace(EAIState::Patrol, new FStateChangePredicate<ABaseAIController>(this, &ABaseAIController::test1));
+	StateChangeFunctions.Add(EAIState::Idle, IdleMap);
+}
+
 void ABaseAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+EAIStateChangeResult ABaseAIController::RequestState(EAIState NewState)
+{
+	ASSERT_RETURN_VALUE(BlackboardComponent != nullptr, EAIStateChangeResult::Failed);
+
+	TNewStateChangeFunctionMap* NewStateFunctionMap = StateChangeFunctions.Find(CurrentState);
+	if (NewStateFunctionMap != nullptr)
+	{
+		TSharedPtr<FStateChangePredicateBase>* StateChangePredicate = NewStateFunctionMap->Find(NewState);
+		if (StateChangePredicate != nullptr && *StateChangePredicate != nullptr)
+		{
+			EAIStateChangeResult Result = (**StateChangePredicate)();
+
+			switch (Result)
+			{
+				case EAIStateChangeResult::Failed:
+					LOG_RETURN_VALUE(false, Result, LogAI, Warning, "State change for %s failed from %s to %s", *(GetOwner()->GetName()), *(StaticEnum<EAIState>()->GetValueAsString(CurrentState)), *(StaticEnum<EAIState>()->GetValueAsString(NewState)));
+				case EAIStateChangeResult::InProgress:
+					// The state transition will actually change the state
+					BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(RequestedStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(NewState));
+					RequestedState = NewState;
+					return Result;
+				case EAIStateChangeResult::Succeeded:
+				default:
+					break;
+			}
+		}
+	}
+	// Changed states immediately, set both the requested and current state
+	BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(RequestedStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(NewState));
+	BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(CurrentStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(NewState));
+	CurrentState = NewState;
+	return EAIStateChangeResult::Succeeded;
+}
+
+void ABaseAIController::FinishStateChange()
+{
+	FAIMessage Msg(ABaseAIController::AIMessage_StateChangeFinished, this, true);
+	FAIMessage::Send(static_cast<AController*>(this), Msg);
+
+	// Update state
+	ASSERT_RETURN(BlackboardComponent != nullptr);
+	BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(CurrentStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(RequestedState));
+	CurrentState = RequestedState;
 }
 
 void ABaseAIController::OnTargetDetected(AActor* DetectedActor, const FAIStimulus stimulus)
@@ -67,7 +158,7 @@ void ABaseAIController::OnTargetDetected(AActor* DetectedActor, const FAIStimulu
 	{
 		if (stimulus.WasSuccessfullySensed())
 		{
-			GetBlackBoard()->SetValue<UBlackboardKeyType_Enum>(BlackBoardKeys::STATE, static_cast<UBlackboardKeyType_Enum::FDataType>(EAIState::CHASE));
+			RequestState(EAIState::Chase);
 		}
 	}
 	else if (stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
@@ -77,11 +168,11 @@ void ABaseAIController::OnTargetDetected(AActor* DetectedActor, const FAIStimulu
 		{
 			if (stimulus.WasSuccessfullySensed())
 			{
-				GetBlackBoard()->SetValue<UBlackboardKeyType_Enum>(BlackBoardKeys::STATE, static_cast<UBlackboardKeyType_Enum::FDataType>(EAIState::CHASE));
+				RequestState(EAIState::Chase);
 			}
 			else
 			{
-				GetBlackBoard()->SetValue<UBlackboardKeyType_Enum>(BlackBoardKeys::STATE, static_cast<UBlackboardKeyType_Enum::FDataType>(EAIState::SEARCH));
+				RequestState(EAIState::Search);
 			}
 		}
 	}

@@ -10,6 +10,7 @@
 #include "Internationalization/Text.h"
 #include "Misc/MessageDialog.h"
 
+DEFINE_LOG_CATEGORY(LogAI);
 DEFINE_LOG_CATEGORY(LogAISpline);
 
 bool PrintAssertMessage(const char* Cond, const char* File, int Line, const char* Format, ...)
