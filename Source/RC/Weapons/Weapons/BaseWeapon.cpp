@@ -2,6 +2,7 @@
 
 #include "BaseWeapon.h"
 
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 
@@ -53,6 +54,19 @@ void ABaseWeapon::Tick(float DeltaTime)
 void ABaseWeapon::SetWielder(ABaseCharacter* NewWielder)
 {
 	Wielder = NewWielder;
+
+	// Attach weapon to socket
+	if (!SocketName.IsNone())
+	{
+		USkeletalMeshComponent* WielderMesh = Wielder->FindComponentByClass<USkeletalMeshComponent>();
+		if (WielderMesh)
+		{
+			FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules::SnapToTargetNotIncludingScale;
+			AttachmentRules.bWeldSimulatedBodies = true;
+			ASSERT_RETURN(GetMesh() != nullptr);
+			GetMesh()->AttachToComponent(WielderMesh, AttachmentRules, SocketName);
+		}
+	}
 }
 
 bool ABaseWeapon::CanStartShooting()
@@ -87,8 +101,57 @@ bool ABaseWeapon::CanShoot()
 
 bool ABaseWeapon::Shoot()
 {
+	
 	CooldownTimer.Set(WeaponConfig.CooldownDelay);
 	return true;
+}
+
+bool ABaseWeapon::ShootAtTarget(const FVector& TargetLocation)
+{
+	UWorld* World = GetWorld();
+	ASSERT_RETURN_VALUE(World != nullptr, false);
+
+	const FTransform& BulletTransform = BulletOffsetSocket->GetSocketTransform(Mesh);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = Wielder;
+	SpawnParams.bNoFail = true;
+	ABaseBullet* Bullet = World->SpawnActor<ABaseBullet>(WeaponConfig.BulletClass, BulletTransform, SpawnParams);
+	ASSERT_RETURN_VALUE(Bullet != nullptr, false);
+
+	FVector Trajectory = TargetLocation - BulletTransform.GetLocation();
+	Trajectory.Normalize();
+
+	FBulletData BulletData;
+	BulletData.Damage = 10;
+	BulletData.Direction = Trajectory;
+	BulletData.Shooter = GetWielder();
+	BulletData.Weapon = this;
+
+	Bullet->Init(BulletData);
+	return true;
+}
+
+bool ABaseWeapon::ShootAtTarget(ABaseCharacter* Target)
+{
+	// Get the middle of the target's bounding box
+	// Maybe change it to looking for a plug in the future
+	ASSERT_RETURN_VALUE(Target != nullptr, false);
+
+	UCapsuleComponent* TargetCapsule = Target->GetCapsuleComponent();
+	FVector TargetLocation;
+	if (TargetCapsule != nullptr)
+	{
+		TargetLocation = TargetCapsule->GetComponentLocation();
+	}
+	else
+	{
+		UE_LOG(LogAI, Error, TEXT("Target %s doesn't have capsule component"), *GetName());
+		FBox Bounds = Target->GetComponentsBoundingBox(false, true);
+		TargetLocation = Bounds.GetCenter();
+	}
+	return ShootAtTarget(TargetLocation);
 }
 
 void ABaseWeapon::CooldownExpired()

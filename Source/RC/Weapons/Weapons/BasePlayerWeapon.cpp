@@ -44,7 +44,8 @@ void ABasePlayerWeapon::Tick(float DeltaTime)
 // Set the new wielder
 void ABasePlayerWeapon::SetWielder(ABaseCharacter* NewWielder, UCameraComponent* NewWielderCamera)
 {
-	Wielder = NewWielder;
+	Super::SetWielder(NewWielder);
+
 	WielderCamera = NewWielderCamera;
 }
 
@@ -105,8 +106,8 @@ bool ABasePlayerWeapon::ShootFull()
 
 	auto BulletTransform = BulletOffsetSocket->GetSocketTransform(Mesh);
 
-	// Get the trajectory
-	FVector Trajectory;
+	// Get the target
+	FVector Target;
 	if (WielderCamera != nullptr)
 	{
 		FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("Gun Trace")), true, this);
@@ -118,38 +119,14 @@ bool ABasePlayerWeapon::ShootFull()
 		FVector End = Start + (WielderCamera->GetComponentRotation().Vector() * 4000);
 		GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Camera, RV_TraceParams);
 
-		if (Hit.bBlockingHit)
-		{
-			Trajectory = Hit.ImpactPoint - BulletTransform.GetLocation();
-		}
-		else
-		{
-			Trajectory = End - BulletTransform.GetLocation();
-		}
-
-		Trajectory.Normalize();
+		Target = Hit.bBlockingHit ? Hit.ImpactPoint : End;
 	}
 	else
 	{
-		Trajectory = GetActorForwardVector();
+		Target = GetActorLocation() + GetActorForwardVector();
 	}
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-	SpawnParams.Instigator = Wielder;
-	SpawnParams.bNoFail = true;
-	ABaseBullet* Bullet = World->SpawnActor<ABaseBullet>(WeaponConfig.BulletClass, BulletTransform, SpawnParams);
-	ASSERT_RETURN_VALUE(Bullet != nullptr, false);
-
-	FBulletData BulletData;
-	BulletData.Damage = 10;
-	BulletData.Direction = Trajectory;
-	BulletData.Shooter = GetWielder();
-	BulletData.Weapon = this;
-
-	Bullet->Init(BulletData);
-
-	return true;
+	return Super::ShootAtTarget(Target);
 }
 
 bool ABasePlayerWeapon::ShootHalf()

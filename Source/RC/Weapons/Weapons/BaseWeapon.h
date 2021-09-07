@@ -70,6 +70,12 @@ public:
 	UFUNCTION()
 	virtual bool Shoot();
 
+	/** Shoot the weapon at the specified target */
+	virtual bool ShootAtTarget(const FVector& TargetLocation);
+
+	/** Shoot the weapon at the specified target */
+	virtual bool ShootAtTarget(class ABaseCharacter* Target);
+
 	/** Returns Mesh subobject **/
 	FORCEINLINE class USkeletalMeshComponent* GetMesh() const { return Mesh; }
 

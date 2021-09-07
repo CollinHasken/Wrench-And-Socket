@@ -16,11 +16,32 @@ public:
 	// Sets default values for this character's properties
 	ABaseEnemy();
 
+	/** Attack the player */
+	void AttackPlayer();
+
 	/** Returns Spline Follower subobject **/
 	FORCEINLINE class USplineFollowerComponent* GetSplineFollower() const { return SplineFollower; }
+
+	/** Returns Weapn subobject **/
+	FORCEINLINE class ABaseEnemyWeapon* GetWeapon() const { return Weapon; }
+
+protected:
+	void BeginPlay() override;
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	/** Health */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI, meta = (AllowPrivateAccess = "true"))
 	class USplineFollowerComponent* SplineFollower;
+
+	/** Weapon Class*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class ABaseEnemyWeapon> WeaponClass;
+
+	/** Weapon*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	class ABaseEnemyWeapon* Weapon;
+
+	/** Spawn and setup the weapon */
+	void SetupWeapon();
 };

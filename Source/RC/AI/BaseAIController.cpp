@@ -158,7 +158,7 @@ void ABaseAIController::OnTargetDetected(AActor* DetectedActor, const FAIStimulu
 	{
 		if (stimulus.WasSuccessfullySensed())
 		{
-			RequestState(EAIState::Chase);
+			RequestState(EAIState::Combat);
 		}
 	}
 	else if (stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
@@ -168,12 +168,13 @@ void ABaseAIController::OnTargetDetected(AActor* DetectedActor, const FAIStimulu
 		{
 			if (stimulus.WasSuccessfullySensed())
 			{
-				RequestState(EAIState::Chase);
+				RequestState(EAIState::Combat);
 			}
 			else
 			{
 				RequestState(EAIState::Search);
 			}
+			GetBlackBoard()->SetValueAsBool(BlackBoardKeys::CAN_SEE_PLAYER, stimulus.WasSuccessfullySensed());
 		}
 	}
 }

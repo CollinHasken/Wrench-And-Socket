@@ -110,19 +110,6 @@ bool UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 		}
 	}
 
-	// Attach weapon to socket
-	FName SocketName = EquippedWeapon->GetSocketName();
-	if (!SocketName.IsNone())
-	{
-		USkeletalMeshComponent* OwnerMesh = Owner->FindComponentByClass<USkeletalMeshComponent>();
-		if (OwnerMesh) {
-			FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules::SnapToTargetNotIncludingScale;
-			AttachmentRules.bWeldSimulatedBodies = true;
-
-			EquippedWeapon->GetMesh()->AttachToComponent(OwnerMesh, AttachmentRules, SocketName);
-		}
-	}
-
 	return true;
 }
 

@@ -14,6 +14,7 @@ enum class EAIState : uint8
 	Patrol		UMETA(DisplayName = "Patrol"),
 	Search		UMETA(DisplayName = "Search"),
 	Chase		UMETA(DisplayName = "Chase"),
+	Combat		UMETA(DisplayName = "Combat"),
 
 	NUM_STATES	UMETA(Hidden)
 };
