@@ -52,32 +52,32 @@ void UInventoryComponent::AssignSlot(EInventorySlot Slot, TSubclassOf<ABasePlaye
 }
 
 // Equip a slot as the current weapon. If there's no weapon in that slot, then it won't equip
-bool UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
+ABasePlayerWeapon* UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 {
 	// Equipping invalid slot
 	if (NewSlot == EInventorySlot::NUM_SLOTS)
 	{
-		return false;
+		return nullptr;
 	}
 
 	// Equipping the same slot
 	if (NewSlot == EquippedSlot)
 	{
-		return true;
+		return GetEquippedWeapon();
 	}
 
 	// New slot has no weapon
 	TSubclassOf<ABasePlayerWeapon>& WeaponClass = WeaponClasses[static_cast<uint8>(NewSlot)];
 	if (WeaponClass == NULL)
 	{
-		return false;
+		return nullptr;
 	}
 
 	AActor* Owner = GetOwner();
-	ASSERT_RETURN_VALUE(Owner != nullptr, false);
+	ASSERT_RETURN_VALUE(Owner != nullptr, nullptr);
 
 	ABaseCharacter* BaseCharacter = Cast<ABaseCharacter>(Owner);
-	ASSERT_RETURN_VALUE(BaseCharacter != nullptr, false, "Inventory isn't on a base character?");
+	ASSERT_RETURN_VALUE(BaseCharacter != nullptr, nullptr, "Inventory isn't on a base character?");
 
 	// * TODO *
 	// delete old weapon
@@ -88,7 +88,10 @@ bool UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 		EquippedWeapon->Destroy();
 	}
 
-	EquippedWeapon = SpawnSlot(NewSlot);
+	ABasePlayerWeapon* NewWeapon = SpawnSlot(NewSlot);
+	ASSERT_RETURN_VALUE(NewWeapon != nullptr, nullptr, "New weapon wasn't able to be spawned");
+
+	EquippedWeapon = NewWeapon;
 	EquippedSlot = NewSlot;
 
 	UCameraComponent* CharacterCamera = BaseCharacter->FindComponentByClass<UCameraComponent>();
@@ -110,10 +113,12 @@ bool UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 		}
 	}
 
-	return true;
+	WeaponEquippedDelegate.Broadcast(EquippedWeapon);
+
+	return EquippedWeapon;
 }
 
-bool UInventoryComponent::EquipQuickSlot(EQuickSlot QuickSlot)
+ABasePlayerWeapon* UInventoryComponent::EquipQuickSlot(EQuickSlot QuickSlot)
 {
 	return EquipSlot(QuickSlots[static_cast<uint8>(QuickSlot)]);
 }
@@ -125,7 +130,7 @@ void UInventoryComponent::EquipToQuickSlot(EQuickSlot QuickSlot, EInventorySlot 
 }
 
 /** Equip the next slot numerically */
-void UInventoryComponent::EquipNextSlot()
+ABasePlayerWeapon* UInventoryComponent::EquipNextSlot()
 {
 	uint8 InventorySlotIndex = (static_cast<uint8>(EquippedSlot) + 1) % static_cast<uint8>(EInventorySlot::NUM_SLOTS);
 	for (; InventorySlotIndex != static_cast<uint8>(EquippedSlot); InventorySlotIndex = (InventorySlotIndex + 1) % static_cast<uint8>(EInventorySlot::NUM_SLOTS))
@@ -135,13 +140,13 @@ void UInventoryComponent::EquipNextSlot()
 			continue;
 		}
 
-		EquipSlot(static_cast<EInventorySlot>(InventorySlotIndex));
-		break;
+		return EquipSlot(static_cast<EInventorySlot>(InventorySlotIndex));
 	}
+	return nullptr;
 }
 
 /** Equip the previous slot numerically */
-void UInventoryComponent::EquipPreviousSlot()
+ABasePlayerWeapon* UInventoryComponent::EquipPreviousSlot()
 {
 	uint8 InventorySlotIndex = static_cast<uint8>(EquippedSlot) == 0 ? static_cast<uint8>(EInventorySlot::NUM_SLOTS) - 1 : (static_cast<uint8>(EquippedSlot) - 1);
 	for (; InventorySlotIndex != static_cast<uint8>(EquippedSlot); InventorySlotIndex = InventorySlotIndex == 0 ? static_cast<uint8>(EInventorySlot::NUM_SLOTS) - 1 : InventorySlotIndex - 1)
@@ -156,9 +161,9 @@ void UInventoryComponent::EquipPreviousSlot()
 			continue;
 		}
 
-		EquipSlot(static_cast<EInventorySlot>(InventorySlotIndex));
-		break;
+		return EquipSlot(static_cast<EInventorySlot>(InventorySlotIndex));
 	}
+	return nullptr;
 }
 
 

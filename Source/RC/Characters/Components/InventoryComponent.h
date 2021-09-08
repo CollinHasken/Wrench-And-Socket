@@ -11,6 +11,8 @@
 
 #include "InventoryComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, class ABasePlayerWeapon*, Weapon);
+
 USTRUCT(BlueprintType)
 struct FLoadoutSlotInfo
 {
@@ -58,20 +60,20 @@ public:
 	 *
 	 * @Param NewSlot The slot to switch to
 	 *
-	 * @Return True if the weapon was properly equipped
+	 * @Return The newely equipped weapon
 	 */
 	UFUNCTION(BlueprintCallable)
-	bool EquipSlot(EInventorySlot NewSlot);
+	class ABasePlayerWeapon* EquipSlot(EInventorySlot NewSlot);
 
 	/**
 	 * Equip a slot as the current weapon through the quick slot. If there's no inventory slot assigned to that quick slot or no weapon in that slot, then it won't equip
 	 *
 	 * @Param QuickSlot The quick slot to switch to
 	 *
-	 * @Return True if the weapon was properly equipped
+	 * @Return The newely equipped weapon
 	 */
 	UFUNCTION(BlueprintCallable)
-	bool EquipQuickSlot(EQuickSlot QuickSlot);
+	class ABasePlayerWeapon* EquipQuickSlot(EQuickSlot QuickSlot);
 
 	/**
 	 * Equip a weapon to a quickslot by mapping the inventory slot
@@ -83,14 +85,17 @@ public:
 	void EquipToQuickSlot(EQuickSlot QuickSlot, EInventorySlot InventorySlot);
 
 	/** Equip the next slot numerically */
-	void EquipNextSlot();
+	class ABasePlayerWeapon* EquipNextSlot();
 
 	/** Equip the previous slot numerically */
-	void EquipPreviousSlot();
+	class ABasePlayerWeapon* EquipPreviousSlot();
 
 	// Return the currently equipped weapon
 	UFUNCTION(BlueprintCallable)
 	class ABasePlayerWeapon* GetEquippedWeapon() { return EquippedWeapon; }
+
+	/** Get the Weapon Equipped delegate */
+	FOnWeaponEquipped& OnWeaponEquipped() { return WeaponEquippedDelegate; }
 
 protected:
 	// Called when the game starts
@@ -113,6 +118,9 @@ private:
 
 	UPROPERTY(SaveGame)
 	EInventorySlot EquippedSlot = EInventorySlot::NUM_SLOTS;
+
+	UPROPERTY(BlueprintAssignable, Category = Weapon, meta = (AllowPrivateAccess))
+	FOnWeaponEquipped WeaponEquippedDelegate;
 
 	class ABasePlayerWeapon* EquippedWeapon = nullptr;
 };

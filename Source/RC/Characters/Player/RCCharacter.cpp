@@ -14,10 +14,20 @@
 #include "RC/Debug/Debug.h"
 #include "RC/Characters/Components/InventoryComponent.h"
 #include "RC/Characters/Player/RCPlayerState.h"
+#include "RC/Util/DataSingleton.h"
 #include "RC/Weapons/Weapons/BasePlayerWeapon.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ARCCharacter
+
+ARCCharacter::~ARCCharacter()
+{
+	// Reset the time dilation
+	if (LevelUpTimer.IsActive())
+	{
+		GetWorld()->GetWorldSettings()->SetTimeDilation(1);
+	}
+}
 
 ARCCharacter::ARCCharacter()
 {
@@ -52,16 +62,14 @@ ARCCharacter::ARCCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
-
 	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventory"));
+	Inventory->OnWeaponEquipped().AddDynamic(this, &ARCCharacter::OnWeaponEquipped);
 
 	// Stimulus for AI detection
 	Stimulus = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source"));
 	ASSERT_RETURN(Stimulus != nullptr);
 	Stimulus->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	Stimulus->RegisterWithPerceptionSystem();
-
-	SetupStimulus();
 }
 
 void ARCCharacter::Serialize(FArchive& Ar)
@@ -74,6 +82,25 @@ void ARCCharacter::Serialize(FArchive& Ar)
 		{
 			Ar << *Inventory;
 		}
+	}
+}
+
+// Called every frame
+void ARCCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (LevelUpTimer.IsActive())
+	{
+		ASSERT_RETURN(LevelDilationCurve != nullptr);
+		float Dilation = LevelDilationCurve->GetFloatValue(LevelUpTimer.GetTimeSince());
+
+		GetWorld()->GetWorldSettings()->SetTimeDilation(Dilation);
+	}
+	else if (LevelUpTimer.IsValid())
+	{
+		// Time has expired, invalidate it
+		LevelUpTimer.Invalidate();
 	}
 }
 
@@ -113,8 +140,13 @@ void ARCCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAxis("Shoot", this, &ARCCharacter::Shoot);
 }
 
-void ARCCharacter::SetupStimulus()
+void ARCCharacter::BeginPlay()
 {
+	Super::BeginPlay();
+
+	ASSERT_RETURN(GEngine != nullptr);
+	UDataSingleton* Singleton = Cast<UDataSingleton>(GEngine->GameSingleton);
+	LevelDilationCurve = Singleton->LevelDilationCurve;
 }
 
 void ARCCharacter::EquipNextWeapon()
@@ -180,4 +212,25 @@ void ARCCharacter::Shoot(float Value)
 	}
 
 	EquippedWeapon->UpdateTriggerStatus(ABasePlayerWeapon::TriggerValueToStatus(Value));
+}
+
+void ARCCharacter::OnWeaponEquipped(ABasePlayerWeapon* Weapon)
+{
+	if (Weapon != nullptr)
+	{
+		Weapon->OnLevelUp().BindUObject(this, &ARCCharacter::OnWeaponLevelUp);
+	}
+}
+
+/** Called when the equipped weapon levels up */
+void ARCCharacter::OnWeaponLevelUp(ABasePlayerWeapon* Weapon)
+{
+	// Slow-mo
+	if (LevelDilationCurve != nullptr)
+	{
+		float MinTime = 0, MaxTime = 0;
+		LevelDilationCurve->GetTimeRange(MinTime, MaxTime);
+
+		LevelUpTimer.Set(MaxTime);
+	}
 }

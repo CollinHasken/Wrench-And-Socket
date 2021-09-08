@@ -8,38 +8,7 @@
 
 #include "RC/Characters/BaseCharacter.h"
 #include "RC/Debug/Debug.h"
-#include "RC/Util/DataSingleton.h"
 #include "RC/Weapons/Bullets/BaseBullet.h"
-
-
-// Called when the game starts or when spawned
-void ABasePlayerWeapon::BeginPlay()
-{
-	Super::BeginPlay();
-
-	ASSERT_RETURN(GEngine != nullptr);
-	UDataSingleton* Singleton = Cast<UDataSingleton>(GEngine->GameSingleton);
-	LevelDilationCurve = Singleton->LevelDilationCurve;
-}
-
-// Called every frame
-void ABasePlayerWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (LevelUpTimer.IsActive())
-	{
-		ASSERT_RETURN(LevelDilationCurve != nullptr);
-		float Dilation = LevelDilationCurve->GetFloatValue(LevelUpTimer.GetTimeSince());
-
-		GetWorld()->GetWorldSettings()->SetTimeDilation(Dilation);
-	}
-	else if (LevelUpTimer.IsValid())
-	{
-		// Time has expired, invalidate it
-		LevelUpTimer.Invalidate();
-	}
-}
 
 // Set the new wielder
 void ABasePlayerWeapon::SetWielder(ABaseCharacter* NewWielder, UCameraComponent* NewWielderCamera)
@@ -163,17 +132,12 @@ bool ABasePlayerWeapon::CanLevelUp() const
 void ABasePlayerWeapon::LevelUp()
 {
 	ASSERT_RETURN(WeaponData != nullptr);
-	// Slow-mo
-	if (LevelDilationCurve != nullptr)
-	{
-		float MinTime = 0, MaxTime = 0;
-		LevelDilationCurve->GetTimeRange(MinTime, MaxTime);
-
-		LevelUpTimer.Set(MaxTime);
-	}
 
 	// Increment level
 	WeaponData->CurrentLevelIndex += 1;
+
+	// Execute delegate
+	LevelUpDelegate.ExecuteIfBound(this);
 
 	// Remove XP that was required and maybe level up again
 	WeaponData->CurrentXP -= GetCurrentLevelData().XPNeeded;

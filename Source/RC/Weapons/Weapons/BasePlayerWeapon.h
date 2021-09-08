@@ -6,6 +6,8 @@
 #include "RC/Weapons/Weapons/BaseWeapon.h"
 #include "BasePlayerWeapon.generated.h"
 
+DECLARE_DELEGATE_OneParam(FOnWeaponLevelUp, class ABasePlayerWeapon*);
+
 UENUM(BlueprintType, Category = "Weapon")
 enum class ETriggerStatus : uint8
 {
@@ -37,9 +39,6 @@ class RC_API ABasePlayerWeapon : public ABaseWeapon
 	GENERATED_BODY()
 
 public:
-
-	virtual void Tick(float DeltaTime) override;
-
 	void SetData(FWeaponData& InWeaponData) { WeaponData = &InWeaponData; WeaponData->CurrentWeapon = this; }
 
 	/**
@@ -69,10 +68,9 @@ public:
 
 	void GrantDamageXP(float XP);
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	FOnWeaponLevelUp& OnLevelUp() { return LevelUpDelegate; }
 
+protected:
 	void MaybeShoot();
 
 	/** Perform a shot when the trigger is fully held **/
@@ -104,11 +102,9 @@ protected:
 
 	FWeaponData* WeaponData = nullptr;
 
-	// Timer to keep track of level up slowmo
-	FTimeStamp LevelUpTimer;
-
 	// The camera of the wielder to use for aiming
 	class UCameraComponent* WielderCamera = nullptr;
 
-	class UCurveFloat* LevelDilationCurve = nullptr;
+private:
+	FOnWeaponLevelUp LevelUpDelegate;
 };

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 
 #include "RC/Characters/BaseCharacter.h"
+#include "RC/Util/TimeStamp.h"
 
 #include "RCCharacter.generated.h"
 
@@ -14,9 +15,12 @@ class ARCCharacter : public ABaseCharacter
 	GENERATED_BODY()
 
 public:
+	~ARCCharacter();
 	ARCCharacter();
 
 	virtual void Serialize(FArchive& Ar) override;
+
+	virtual void Tick(float DeltaTime) override;
 
 	/**
 	 * Called when the character has given damage to someone else
@@ -41,12 +45,12 @@ public:
 
 
 protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
-
-	void SetupStimulus();
 
 	/** Equip the next weapon in our inventory */
 	void EquipNextWeapon();
@@ -72,10 +76,24 @@ protected:
 	 */
 	void LookUpAtRate(float Rate);
 
-	/** Called via input to update shooting the current weapon 
+	/** 
+	 * Called via input to update shooting the current weapon 
 	 * @param Value	This is a normalized value of the percentage the shoot trigger is held
 	 */
 	void Shoot(float Value);
+
+	/**
+	 * Called when the a weapon is equipped
+	 * @param Weapon	The weapon that was equipped
+	 */
+	UFUNCTION()
+	void OnWeaponEquipped(class ABasePlayerWeapon* Weapon);
+
+	/**
+	 * Called when the equipped weapon levels up
+	 * @param Weapon	The weapon that leveld up
+	 */
+	void OnWeaponLevelUp(class ABasePlayerWeapon* Weapon);
 
 private:
 	/** Camera boom positioning the camera behind the character */
@@ -93,7 +111,11 @@ private:
 	class UAIPerceptionStimuliSourceComponent* Stimulus;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, SaveGame, meta = (AllowPrivateAccess = "true"))
-		float Kills;
+	float Kills;
+
+	// Timer to keep track of level up slowmo
+	FTimeStamp LevelUpTimer;
+	class UCurveFloat* LevelDilationCurve = nullptr;
 };
 
 USTRUCT()
