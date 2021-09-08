@@ -25,7 +25,15 @@ ARCCharacter::~ARCCharacter()
 	// Reset the time dilation
 	if (LevelUpTimer.IsActive())
 	{
-		GetWorld()->GetWorldSettings()->SetTimeDilation(1);		
+		UWorld* World = GetWorld();
+		if (World != nullptr)
+		{
+			AWorldSettings* WorldSettings = World->GetWorldSettings();
+			if (WorldSettings != nullptr)
+			{
+				WorldSettings->SetTimeDilation(1);
+			}
+		}
 	}
 }
 
@@ -92,10 +100,17 @@ void ARCCharacter::Tick(float DeltaTime)
 
 	if (LevelUpTimer.IsActive())
 	{
-		ASSERT_RETURN(LevelDilationCurve != nullptr);
-		float Dilation = LevelDilationCurve->GetFloatValue(LevelUpTimer.GetTimeSince());
-
-		GetWorld()->GetWorldSettings()->SetTimeDilation(Dilation);		
+		UWorld* World = GetWorld();
+		if (World != nullptr)
+		{
+			AWorldSettings* WorldSettings = World->GetWorldSettings();
+			if (WorldSettings != nullptr)
+			{
+				ASSERT_RETURN(LevelDilationCurve != nullptr);
+				float Dilation = LevelDilationCurve->GetFloatValue(LevelUpTimer.GetTimeSince());
+				WorldSettings->SetTimeDilation(Dilation);
+			}
+		}
 	}
 	else if (LevelUpTimer.IsValid())
 	{
