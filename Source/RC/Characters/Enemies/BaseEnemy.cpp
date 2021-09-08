@@ -1,6 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "BaseEnemy.h"
 
+#include "AIController.h"
+#include "BrainComponent.h"
+
 #include "RC/AI/SplineFollowerComponent.h"
 #include "RC/Debug/Debug.h"
 #include "RC/Weapons/Weapons/BaseEnemyWeapon.h"
@@ -20,6 +23,22 @@ void ABaseEnemy::AttackPlayer()
 	LOG_RETURN(Weapon != nullptr, LogAI, Error, "Enemy %s doesn't have weapon", *GetName());
 	
 	Weapon->ShootAtPlayer();
+}
+
+/** Called when the character dies */
+void ABaseEnemy::OnActorDied(AActor* Actor)
+{
+	Super::OnActorDied(Actor);
+
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if (AIController)
+	{
+		UBrainComponent* Brain = AIController->GetBrainComponent();
+		if (Brain)
+		{
+			Brain->StopLogic("Died");
+		}
+	}
 }
 
 void ABaseEnemy::BeginPlay()

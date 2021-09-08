@@ -32,10 +32,20 @@ public:
 	 */
 	virtual void OnDamageGiven(const FDamageReceivedParams& Params) {};
 
+
 	/** Returns Health subobject **/
 	FORCEINLINE class UHealthComponent* GetHealth() const { return Health; }
 
+protected:
+	/**
+	 * Called when the character dies
+	 * @param Actor	The actor that's died
+	 */
+	UFUNCTION()
+	virtual void OnActorDied(AActor* Actor);
+
 private:
+
 	/** Health */
 	//component is null on load. need to special serialize? check google for saving component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health, meta = (AllowPrivateAccess = "true"))
@@ -44,4 +54,6 @@ private:
 	/** Health */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = XP, meta = (AllowPrivateAccess = "true"))
 	float XPForKilling = 0;
+
+	bool bIsRagdolling = false;
 };

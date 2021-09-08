@@ -5,6 +5,7 @@
 #include "Perception/AISense_Damage.h"
 
 #include "RC/Characters/BaseCharacter.h"
+#include "RC/Util/RCStatics.h"
 
 // Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
@@ -47,6 +48,12 @@ void UHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 // Apply damage requested
 float UHealthComponent::ApplyDamage(const FDamageRequestParams& DamageParams)
 {
+	// Already dead
+	if (bIsDead)
+	{
+		return -1;
+	}
+
 	// Remove health
 	float DamageDealt = FMath::Min(DamageParams.Damage, CurrentHealth);
 	CurrentHealth -= DamageParams.Damage;
@@ -67,5 +74,9 @@ float UHealthComponent::ApplyDamage(const FDamageRequestParams& DamageParams)
 
 void UHealthComponent::OnKilled()
 {
-	GetOwner()->Destroy();
+	bIsDead = true;
+
+	OnActorDied().Broadcast(GetOwner());
+
+	GetOwner()->SetLifeSpan(5);
 }

@@ -99,7 +99,8 @@ public:
 
 protected:
 	// Called when the game starts
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	class ABasePlayerWeapon* SpawnSlot(EInventorySlot NewSlot);

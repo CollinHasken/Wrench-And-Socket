@@ -9,6 +9,8 @@
 
 #include "HealthComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActorDied, class AActor*, Actor);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RC_API UHealthComponent : public UActorComponent
 {
@@ -32,8 +34,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float ApplyDamage(const FDamageRequestParams& DamageParams);
 
-	/** Once we've ran out of health */
-	void OnKilled();
+	/** Get the Weapon Equipped delegate */
+	FOnActorDied& OnActorDied() { return ActorDiedDelegate; }
 
 protected:
 	// Called when the game starts
@@ -46,4 +48,13 @@ private:
 
 	UPROPERTY(BlueprintReadOnly , Category = Health, SaveGame, meta = (AllowPrivateAccess = "true"))
 	int CurrentHealth = 100;
+
+	UPROPERTY(BlueprintReadOnly, Category = Health, meta = (AllowPrivateAccess = "true"))
+	bool bIsDead = false;
+
+	UPROPERTY(BlueprintAssignable, Category = Health, meta = (AllowPrivateAccess))
+	FOnActorDied ActorDiedDelegate;
+
+	/** Once we've ran out of health */
+	void OnKilled();
 };

@@ -25,7 +25,7 @@ ARCCharacter::~ARCCharacter()
 	// Reset the time dilation
 	if (LevelUpTimer.IsActive())
 	{
-		GetWorld()->GetWorldSettings()->SetTimeDilation(1);
+		GetWorld()->GetWorldSettings()->SetTimeDilation(1);		
 	}
 }
 
@@ -95,7 +95,7 @@ void ARCCharacter::Tick(float DeltaTime)
 		ASSERT_RETURN(LevelDilationCurve != nullptr);
 		float Dilation = LevelDilationCurve->GetFloatValue(LevelUpTimer.GetTimeSince());
 
-		GetWorld()->GetWorldSettings()->SetTimeDilation(Dilation);
+		GetWorld()->GetWorldSettings()->SetTimeDilation(Dilation);		
 	}
 	else if (LevelUpTimer.IsValid())
 	{
@@ -233,4 +233,14 @@ void ARCCharacter::OnWeaponLevelUp(ABasePlayerWeapon* Weapon)
 
 		LevelUpTimer.Set(MaxTime);
 	}
+}
+
+void ARCCharacter::OnActorDied(AActor* Actor)
+{
+	Super::OnActorDied(Actor);
+
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	ASSERT_RETURN(PlayerController != nullptr);
+
+	DisableInput(PlayerController);
 }

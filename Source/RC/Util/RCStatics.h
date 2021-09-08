@@ -23,4 +23,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Game")
 	static bool IsActorPlayer(const AActor* Actor);
+
+	UFUNCTION(BlueprintPure, Category = "Game")
+	static bool IsActorHuman(const AActor* Actor);
 };

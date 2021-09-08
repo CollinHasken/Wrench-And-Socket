@@ -34,6 +34,17 @@ void UInventoryComponent::BeginPlay()
 	EquipSlot(EquippedSlot != EInventorySlot::NUM_SLOTS ? EquippedSlot : DefaultSlot);
 }
 
+// Called before the component is destroyed
+void UInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (EquippedWeapon != nullptr)
+	{
+		EquippedWeapon->Destroy();
+	}
+}
+
 // Assign a weapon to the slot. If that slot is currently equipped, it'll swap it out
 void UInventoryComponent::AssignSlot(EInventorySlot Slot, TSubclassOf<ABasePlayerWeapon> WeaponClass)
 {

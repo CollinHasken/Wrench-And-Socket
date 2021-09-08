@@ -29,6 +29,12 @@ protected:
 	void BeginPlay() override;
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	/**
+	 * Called when the character dies
+	 * @param Actor	The actor that's died
+	 */
+	void OnActorDied(AActor* Actor) override;
+
 private:
 	/** Health */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI, meta = (AllowPrivateAccess = "true"))

@@ -95,6 +95,12 @@ protected:
 	 */
 	void OnWeaponLevelUp(class ABasePlayerWeapon* Weapon);
 
+	/**
+	 * Called when the character dies
+	 * @param Actor	The actor that's died
+	 */
+	void OnActorDied(AActor* Actor) override;
+
 private:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
