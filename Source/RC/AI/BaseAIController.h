@@ -29,18 +29,58 @@ template <class AIControllerClass>
 struct FStateChangePredicate : public FStateChangePredicateBase
 {
 	typedef EAIStateChangeResult(AIControllerClass::* StateChangeFunction)();
-	StateChangeFunction Function;
-	AIControllerClass* Self;
+	AIControllerClass*	Self;
+	StateChangeFunction	ChangeFunction = nullptr;
 
-	FStateChangePredicate(AIControllerClass* InSelf, StateChangeFunction InFunction)
-		: Function(InFunction), Self(InSelf)
+	FStateChangePredicate(AIControllerClass* InSelf, StateChangeFunction InChangeFunction)
+		: Self(InSelf), ChangeFunction(InChangeFunction)
 	{}
 
-	EAIStateChangeResult operator() () { return (Self->*Function)(); }
+	EAIStateChangeResult operator() () { return (Self->*ChangeFunction)(); }
 };
 
 typedef TMap<EAIState, TSharedPtr<FStateChangePredicateBase>> TNewStateChangeFunctionMap;
-typedef TMap<EAIState, TNewStateChangeFunctionMap> TStateChangeFunctionMap;
+
+struct FStateTransitionBase
+{
+	TNewStateChangeFunctionMap StateChangeMap;
+
+	FStateTransitionBase() = default;
+	FStateTransitionBase(TNewStateChangeFunctionMap& InStateChangeMap) : StateChangeMap(InStateChangeMap) {}
+	virtual ~FStateTransitionBase() {}
+	virtual bool HasTransitionFunctions() { return false; }
+	virtual void Enter() {}
+	virtual void Exit() {}
+};
+
+template <class AIControllerClass>
+struct FStateTransition : public FStateTransitionBase
+{
+	typedef void(AIControllerClass::* StateEnterFunction)();
+	typedef void(AIControllerClass::* StateExitFunction)();
+
+	AIControllerClass* Self;
+	StateEnterFunction	EnterFunction = nullptr;
+	StateExitFunction	ExitFunction = nullptr;
+
+	FStateTransition(AIControllerClass* InSelf, StateEnterFunction InEnterFunction, TNewStateChangeFunctionMap& InStateChangeMap, StateExitFunction InExitFunction)
+		: FStateTransitionBase(InStateChangeMap), Self(InSelf), EnterFunction(InEnterFunction), ExitFunction(InExitFunction)
+	{}
+
+	FStateTransition(AIControllerClass* InSelf, TNewStateChangeFunctionMap& InStateChangeMap)
+		: FStateTransition(InSelf, nullptr, InStateChangeMap, nullptr)
+	{}
+
+	FStateTransition(AIControllerClass * InSelf, StateEnterFunction InEnterFunction, StateExitFunction InExitFunction)
+		: Self(InSelf), EnterFunction(InEnterFunction), ExitFunction(InExitFunction)
+	{}
+
+	bool HasTransitionFunctions() { return EnterFunction != nullptr || ExitFunction != nullptr; }
+	void Enter() override{ if (EnterFunction != nullptr) (Self->*EnterFunction)(); }
+	void Exit() override{ if (ExitFunction != nullptr) (Self->*ExitFunction)(); }
+};
+
+typedef TMap<EAIState, TSharedPtr<FStateTransitionBase>> TStateTransitionMap;
 
 /**
  * 
@@ -74,14 +114,17 @@ protected:
 	 * Add the new state transition functions to the map.
 	 * If there is an existing function for a state transition, it will be replaced with the new function
 	 * 
-	 * Functions:	The map of new state transition functions
+	 * Transitions:	The map of new state transition
 	 */
-	void AddStateChangeFunctions(const TStateChangeFunctionMap& Functions);
+	void AddStateTransition(const TStateTransitionMap& Transitions);
 
-	/** Create new state transition function map. Call AssignStateChangeFunctions to add them to the map */
-	virtual void SetupStateChangeFunctions();
+	/** Create new state transition function map. Call AssignStateTransitions to add them to the map */
+	virtual void SetupStateTransitions();
 
-	/** Send off events that the state change has finished */
+	/** Send off events for behavior tree nodes that the state change has finished */
+	void OnStateTransitionFinsished();
+
+	/** Actually change the state */
 	void FinishStateChange();
 
 private:
@@ -111,10 +154,11 @@ private:
 	EAIState CurrentState = EAIState::NUM_STATES;
 	EAIState RequestedState = EAIState::NUM_STATES;
 
-	TStateChangeFunctionMap StateChangeFunctions;
+	TStateTransitionMap StateTransitions;
 
 	UFUNCTION()
 	void OnTargetDetected(AActor* DetectedActor, const FAIStimulus stimulus);
 
 	void SetupPerception();
+	void UpdatePerceptionSight();
 };

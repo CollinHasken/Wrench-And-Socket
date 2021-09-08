@@ -45,7 +45,7 @@ void ABaseAIController::BeginPlay()
 
 	CurrentState = DefaultState;
 
-	SetupStateChangeFunctions();
+	SetupStateTransitions();
 }
 
 void ABaseAIController::OnPossess(APawn* const PossessedPawn)
@@ -71,30 +71,47 @@ UBlackboardData* ABaseAIController::GetBlackboardAsset() const
 }
 
 /** Add the new state transition functions to the map */
-void ABaseAIController::AddStateChangeFunctions(const TStateChangeFunctionMap& Functions)
+void ABaseAIController::AddStateTransition(const TStateTransitionMap& Transitions)
 {
-	for (const TPair<EAIState, TNewStateChangeFunctionMap> NewFunctionMapPair : Functions)
+	for (const TPair<EAIState, TSharedPtr<FStateTransitionBase>> NewFunctionTransitionPair : Transitions)
 	{
-		// If there's an existing map for a state, then we need to add the new transitions to that map
-		TNewStateChangeFunctionMap* CurrentFunctionMap = StateChangeFunctions.Find(NewFunctionMapPair.Key);
-		if (CurrentFunctionMap != nullptr)
+		// If there's an existing transition for a state, then we need to add the new functions to that map
+		TSharedPtr<FStateTransitionBase>* CurrentFunctionTransition = StateTransitions.Find(NewFunctionTransitionPair.Key);
+		if (CurrentFunctionTransition != nullptr && (NewFunctionTransitionPair.Value) != nullptr)
 		{
-			CurrentFunctionMap->Append(NewFunctionMapPair.Value);
+			if ((NewFunctionTransitionPair.Value)->HasTransitionFunctions())
+			{
+				/*Need to somehow copy over the self and functions
+				maybe append the new change functions to the current, then make the new equal to the current or swap, then set the current equal to the new?
+				then can't be const*/
+				TNewStateChangeFunctionMap CombinedMap = (*CurrentFunctionTransition)->StateChangeMap;
+				CombinedMap.Append(NewFunctionTransitionPair.Value->StateChangeMap);
+				(*CurrentFunctionTransition) = NewFunctionTransitionPair.Value;
+				(*CurrentFunctionTransition)->StateChangeMap = CombinedMap;
+			}
+			else
+			{
+				// No transition functions to worry about
+				(*CurrentFunctionTransition)->StateChangeMap.Append((NewFunctionTransitionPair.Value)->StateChangeMap);
+			}
 		}
 		else
 		{
 			// Add map for new states
-			StateChangeFunctions.Add(NewFunctionMapPair);
+			StateTransitions.Add(NewFunctionTransitionPair);
 		}
 	}
 }
 
 /** Create new state transition function map */
-void ABaseAIController::SetupStateChangeFunctions()
+void ABaseAIController::SetupStateTransitions()
 {
-	TNewStateChangeFunctionMap IdleMap;	
-	IdleMap.Emplace(EAIState::Patrol, new FStateChangePredicate<ABaseAIController>(this, &ABaseAIController::test1));
-	StateChangeFunctions.Add(EAIState::Idle, IdleMap);
+	//TNewStateChangeFunctionMap ChaseMap;
+	//ChaseMap.Emplace(EAIState::Patrol, new FStateChangePredicate<ABaseAIController>(this, &ABaseAIController::test1));
+	//StateTransitions.Emplace(EAIState::Combat, new FStateTransition<ABaseAIController>(this, &ABaseAIController::UpdatePerceptionSight, CombatMap, &ABaseAIController::UpdatePerceptionSight));
+	
+	StateTransitions.Emplace(EAIState::Combat, new FStateTransition<ABaseAIController>(this, &ABaseAIController::UpdatePerceptionSight, &ABaseAIController::UpdatePerceptionSight));
+	StateTransitions.Emplace(EAIState::Chase, new FStateTransition<ABaseAIController>(this, &ABaseAIController::UpdatePerceptionSight, &ABaseAIController::UpdatePerceptionSight));
 }
 
 void ABaseAIController::Tick(float DeltaTime)
@@ -104,12 +121,17 @@ void ABaseAIController::Tick(float DeltaTime)
 
 EAIStateChangeResult ABaseAIController::RequestState(EAIState NewState)
 {
+	if (NewState == CurrentState)
+	{
+		return EAIStateChangeResult::Succeeded;
+	}
+
 	ASSERT_RETURN_VALUE(BlackboardComponent != nullptr, EAIStateChangeResult::Failed);
 
-	TNewStateChangeFunctionMap* NewStateFunctionMap = StateChangeFunctions.Find(CurrentState);
-	if (NewStateFunctionMap != nullptr)
+	TSharedPtr<FStateTransitionBase>* NewStateTransition = StateTransitions.Find(CurrentState);
+	if (NewStateTransition != nullptr)
 	{
-		TSharedPtr<FStateChangePredicateBase>* StateChangePredicate = NewStateFunctionMap->Find(NewState);
+		TSharedPtr<FStateChangePredicateBase>* StateChangePredicate = (*NewStateTransition)->StateChangeMap.Find(NewState);
 		if (StateChangePredicate != nullptr && *StateChangePredicate != nullptr)
 		{
 			EAIStateChangeResult Result = (**StateChangePredicate)();
@@ -130,21 +152,42 @@ EAIStateChangeResult ABaseAIController::RequestState(EAIState NewState)
 		}
 	}
 	// Changed states immediately, set both the requested and current state
-	BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(RequestedStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(NewState));
-	BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(CurrentStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(NewState));
-	CurrentState = NewState;
+	RequestedState = NewState;
+	FinishStateChange();
 	return EAIStateChangeResult::Succeeded;
 }
 
-void ABaseAIController::FinishStateChange()
+void ABaseAIController::OnStateTransitionFinsished()
 {
 	FAIMessage Msg(ABaseAIController::AIMessage_StateChangeFinished, this, true);
 	FAIMessage::Send(static_cast<AController*>(this), Msg);
 
-	// Update state
-	ASSERT_RETURN(BlackboardComponent != nullptr);
-	BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(CurrentStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(RequestedState));
+	FinishStateChange();
+}
+
+/** Actually change the state */
+void ABaseAIController::FinishStateChange()
+{
+	// On Exit function
+	TSharedPtr<FStateTransitionBase>* OldStateTransition = StateTransitions.Find(CurrentState);
+	if (OldStateTransition != nullptr && *OldStateTransition != nullptr)
+	{
+		(*OldStateTransition)->Exit();
+	}	
+
 	CurrentState = RequestedState;
+	RequestedState = EAIState::NUM_STATES;
+
+	// Update blackboard keys
+	BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(CurrentStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(CurrentState));
+	BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(RequestedStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(RequestedState));
+
+	// On Enter function
+	TSharedPtr<FStateTransitionBase>* NewStateTransition = StateTransitions.Find(CurrentState);
+	if (NewStateTransition != nullptr && *NewStateTransition != nullptr)
+	{
+		(*NewStateTransition)->Enter();
+	}
 }
 
 void ABaseAIController::OnTargetDetected(AActor* DetectedActor, const FAIStimulus stimulus)
@@ -203,4 +246,34 @@ void ABaseAIController::SetupPerception()
 	Perception->ConfigureSense(*SightConfig);
 	Perception->ConfigureSense(*DamageConfig);
 	Perception->OnTargetPerceptionUpdated.AddDynamic(this, &ABaseAIController::OnTargetDetected);
+}
+
+void ABaseAIController::UpdatePerceptionSight()
+{
+	UAIPerceptionComponent* Perception = GetPerceptionComponent();
+	ASSERT_RETURN(Perception != nullptr);
+
+	switch (CurrentState)
+	{
+		case EAIState::Idle:
+		case EAIState::Patrol:
+		case EAIState::Search:
+		case EAIState::NUM_STATES:
+			SightConfig->SightRadius = 800.f;
+			SightConfig->LoseSightRadius = SightConfig->SightRadius + 50.f;
+			break;
+		case EAIState::Chase:
+		case EAIState::Combat:
+			SightConfig->SightRadius = 1400.f;
+			SightConfig->LoseSightRadius = SightConfig->SightRadius + 100.f;
+			break;
+		default:
+			break;
+	}
+
+	// Need to reconfigure to let the sense know values have been changed
+	Perception->ConfigureSense(*SightConfig);
+
+	// Update BB
+	BlackboardComponent->SetValueAsFloat(BlackBoardKeys::SIGHT_DISTANCE, SightConfig->SightRadius);
 }

@@ -3,27 +3,17 @@
 
 #include "BasicGruntAIController.h"
 
-void ABasicGruntAIController::SetupStateChangeFunctions()
+/*
+void ABasicGruntAIController::SetupStateTransitions()
 {
-	Super::SetupStateChangeFunctions();
+	Super::SetupStateTransitions();
 
-	TStateChangeFunctionMap NewMap;
+	TStateTransitionMap NewMap;
 
-	TNewStateChangeFunctionMap IdleMap;
-	IdleMap.Emplace(EAIState::Patrol, new FStateChangePredicate<ABasicGruntAIController>(this, &ABasicGruntAIController::test));
-	NewMap.Add(EAIState::Idle, IdleMap);
+	TNewStateChangeFunctionMap CombatMap;
+	CombatMap.Emplace(EAIState::Idle, new FStateChangePredicate<ABasicGruntAIController>(this, &ABasicGruntAIController::test));
+	NewMap.Emplace(EAIState::Combat, new FStateTransition<ABasicGruntAIController>(this, CombatMap));
 
-	AddStateChangeFunctions(NewMap);
+	AddStateTransition(NewMap);
 }
-
-void ABasicGruntAIController::Tick(float DeltaTime)
-{
-	if (tests > 0)
-	{
-		tests -= DeltaTime;
-		if (tests <= 0)
-		{
-			FinishStateChange();
-		}
-	}
-}
+*/

@@ -11,4 +11,5 @@ namespace BlackBoardKeys
 	TCHAR const* const PLAYER_LOCATION = TEXT("PlayerLocation");
 	TCHAR const* const CAN_SEE_PLAYER = TEXT("CanSeePlayer");
 	TCHAR const* const STATE = TEXT("State");
+	TCHAR const* const SIGHT_DISTANCE = TEXT("SightDistance");
 }

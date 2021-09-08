@@ -15,11 +15,7 @@ class RC_API ABasicGruntAIController : public ABaseAIController
 	GENERATED_BODY()
 
 public:
-	void Tick(float DeltaTime) override;
 
-	float tests = 0;
-	EAIStateChangeResult test() { tests = 2; return EAIStateChangeResult::InProgress; }
 protected:
-	virtual void SetupStateChangeFunctions() override;
-
+	//virtual void SetupStateTransitions() override;
 };
