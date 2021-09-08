@@ -243,7 +243,8 @@ void ABaseAIController::SetupPerception()
 	ASSERT_RETURN(DamageConfig != nullptr);
 
 	// Add config to component
-	Perception->ConfigureSense(*SightConfig);
+	// Updating the sight will configure it
+	UpdatePerceptionSight();
 	Perception->ConfigureSense(*DamageConfig);
 	Perception->OnTargetPerceptionUpdated.AddDynamic(this, &ABaseAIController::OnTargetDetected);
 }
