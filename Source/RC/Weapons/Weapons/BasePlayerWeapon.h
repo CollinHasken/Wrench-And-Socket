@@ -6,7 +6,8 @@
 #include "RC/Weapons/Weapons/BaseWeapon.h"
 #include "BasePlayerWeapon.generated.h"
 
-DECLARE_DELEGATE_OneParam(FOnWeaponLevelUp, class ABasePlayerWeapon*);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnWeaponXPGained, class ABasePlayerWeapon*, Weapon, float, CurrentXP, float, RequiredXP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponLevelUp, class ABasePlayerWeapon*, Weapon, uint8, CurrentLevel);
 
 UENUM(BlueprintType, Category = "Weapon")
 enum class ETriggerStatus : uint8
@@ -39,7 +40,11 @@ class RC_API ABasePlayerWeapon : public ABaseWeapon
 	GENERATED_BODY()
 
 public:
-	void SetData(FWeaponData& InWeaponData) { WeaponData = &InWeaponData; WeaponData->CurrentWeapon = this; }
+	/**
+	 * Set the weapon data that stores things like level and XP
+	 * @param InWeaponData	The weapon data for this weapon
+	 */
+	void SetData(FWeaponData& InWeaponData);
 
 	/**
 	 * Set the new wielder for this weapon
@@ -68,6 +73,8 @@ public:
 
 	void GrantDamageXP(float XP);
 
+	FOnWeaponXPGained& OnXPGained() { return XPGainedDelegate; }
+
 	FOnWeaponLevelUp& OnLevelUp() { return LevelUpDelegate; }
 
 protected:
@@ -84,7 +91,16 @@ protected:
 
 	bool CanLevelUp() const;
 
+	/** Get the current level */
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	uint8 GetCurrentLevel() const;
+
+	/** Get the current XP */
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	float GetCurrentXP() const;
+
 	/** Get the total XP needed to get to the next level */
+	UFUNCTION(BlueprintPure, Category = "Weapon")
 	float GetXPTotalForNextLevel() const;
 
 	/** Level up the weapon */
@@ -106,5 +122,9 @@ protected:
 	class UCameraComponent* WielderCamera = nullptr;
 
 private:
+	UPROPERTY(BlueprintAssignable, Category = Weapon, meta = (AllowPrivateAccess))
 	FOnWeaponLevelUp LevelUpDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = Weapon, meta = (AllowPrivateAccess))
+	FOnWeaponXPGained XPGainedDelegate;
 };

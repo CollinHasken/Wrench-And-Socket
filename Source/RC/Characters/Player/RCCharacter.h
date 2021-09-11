@@ -93,7 +93,8 @@ protected:
 	 * Called when the equipped weapon levels up
 	 * @param Weapon	The weapon that leveld up
 	 */
-	void OnWeaponLevelUp(class ABasePlayerWeapon* Weapon);
+	UFUNCTION()
+	void OnWeaponLevelUp(class ABasePlayerWeapon* Weapon, uint8 CurrentLevel);
 
 	/**
 	 * Called when the character dies

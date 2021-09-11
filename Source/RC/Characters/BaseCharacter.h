@@ -47,11 +47,9 @@ protected:
 private:
 
 	/** Health */
-	//component is null on load. need to special serialize? check google for saving component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health, meta = (AllowPrivateAccess = "true"))
 	class UHealthComponent* Health;
 
-	/** Health */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = XP, meta = (AllowPrivateAccess = "true"))
 	float XPForKilling = 0;
 

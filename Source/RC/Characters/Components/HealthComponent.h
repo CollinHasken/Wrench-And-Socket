@@ -9,6 +9,7 @@
 
 #include "HealthComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnActorDamaged, class AActor*, Actor, float, CurrentHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActorDied, class AActor*, Actor);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -34,7 +35,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float ApplyDamage(const FDamageRequestParams& DamageParams);
 
-	/** Get the Weapon Equipped delegate */
+	/** Get the Actor Damaged delegate */
+	FOnActorDamaged& OnActorDamaged() { return ActorDamagedDelegate; }
+
+	/** Get the Actor Died delegate */
 	FOnActorDied& OnActorDied() { return ActorDiedDelegate; }
 
 protected:
@@ -51,6 +55,9 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = Health, meta = (AllowPrivateAccess = "true"))
 	bool bIsDead = false;
+
+	UPROPERTY(BlueprintAssignable, Category = Health, meta = (AllowPrivateAccess))
+	FOnActorDamaged ActorDamagedDelegate;
 
 	UPROPERTY(BlueprintAssignable, Category = Health, meta = (AllowPrivateAccess))
 	FOnActorDied ActorDiedDelegate;

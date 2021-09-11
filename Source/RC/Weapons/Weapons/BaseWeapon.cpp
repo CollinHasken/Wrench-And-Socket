@@ -124,7 +124,7 @@ bool ABaseWeapon::ShootAtTarget(const FVector& TargetLocation)
 	Trajectory.Normalize();
 
 	FBulletData BulletData;
-	BulletData.Damage = 10;
+	BulletData.Damage = WeaponConfig.BaseDamage;
 	BulletData.Direction = Trajectory;
 	BulletData.Shooter = GetWielder();
 	BulletData.Weapon = this;

@@ -27,6 +27,10 @@ struct FWeaponConfig
 	/** The cooldown after each shot*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float CooldownDelay = 0.5f;
+
+	/** The cooldown after each shot*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+	float BaseDamage = 1;
 };
 
 UCLASS(Abstract, Blueprintable, config=Game)

@@ -233,12 +233,12 @@ void ARCCharacter::OnWeaponEquipped(ABasePlayerWeapon* Weapon)
 {
 	if (Weapon != nullptr)
 	{
-		Weapon->OnLevelUp().BindUObject(this, &ARCCharacter::OnWeaponLevelUp);
+		Weapon->OnLevelUp().AddDynamic(this, &ARCCharacter::OnWeaponLevelUp);
 	}
 }
 
 /** Called when the equipped weapon levels up */
-void ARCCharacter::OnWeaponLevelUp(ABasePlayerWeapon* Weapon)
+void ARCCharacter::OnWeaponLevelUp(ABasePlayerWeapon* Weapon, uint8 CurrentLevel)
 {
 	// Slow-mo
 	if (LevelDilationCurve != nullptr)
@@ -258,4 +258,14 @@ void ARCCharacter::OnActorDied(AActor* Actor)
 	ASSERT_RETURN(PlayerController != nullptr);
 
 	DisableInput(PlayerController);
+
+	// Remove any trigger status to prevent the weapon from continuing firing
+	if (Inventory != nullptr)
+	{
+		ABasePlayerWeapon* EquippedWeapon = Inventory->GetEquippedWeapon();
+		if (EquippedWeapon != nullptr)
+		{
+			EquippedWeapon->UpdateTriggerStatus(ETriggerStatus::NONE);
+		}
+	}
 }

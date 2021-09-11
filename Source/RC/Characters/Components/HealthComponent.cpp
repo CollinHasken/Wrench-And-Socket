@@ -32,8 +32,7 @@ void UHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	CurrentHealth = MaxHealth;	
 }
 
 
@@ -57,6 +56,10 @@ float UHealthComponent::ApplyDamage(const FDamageRequestParams& DamageParams)
 	// Remove health
 	float DamageDealt = FMath::Min(DamageParams.Damage, CurrentHealth);
 	CurrentHealth -= DamageParams.Damage;
+
+	// Broadcast damage
+	ActorDamagedDelegate.Broadcast(GetOwner(), CurrentHealth);
+
 	if (CurrentHealth <= 0)
 	{
 		// Ran out of health
@@ -76,7 +79,7 @@ void UHealthComponent::OnKilled()
 {
 	bIsDead = true;
 
-	OnActorDied().Broadcast(GetOwner());
+	ActorDiedDelegate.Broadcast(GetOwner());
 
 	GetOwner()->SetLifeSpan(5);
 }
