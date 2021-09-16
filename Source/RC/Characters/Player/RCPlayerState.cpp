@@ -3,9 +3,11 @@
 
 #include "RC/Debug/Debug.h"
 #include "RC/Save/RCSaveGame.h"
+#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
 #include "RC/Characters/Player/RCCharacter.h"
 
 
+// Save player data
 void ARCPlayerState::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
@@ -17,6 +19,7 @@ void ARCPlayerState::Serialize(FArchive& Ar)
 	}
 }
 
+// Save the player data for a level transition 
 void ARCPlayerState::SaveForLevelTransition(URCLevelTransitionSave* SaveGame)
 {
 	ASSERT_RETURN(SaveGame != nullptr);
@@ -32,6 +35,7 @@ void ARCPlayerState::SaveForLevelTransition(URCLevelTransitionSave* SaveGame)
 	SaveGame->SavePlayer(ControlledCharacter);
 }
 
+// Load the player data for a level transition
 void ARCPlayerState::LoadForLevelTransition(const URCLevelTransitionSave* SaveGame)
 {
 	// Convert binary array back into actor's variables
@@ -43,4 +47,41 @@ void ARCPlayerState::LoadForLevelTransition(const URCLevelTransitionSave* SaveGa
 	ASSERT_RETURN(ControlledCharacter != nullptr);
 
 	SaveGame->LoadPlayer(ControlledCharacter);
+}
+
+// Find or add the weapon data for a specific class
+FWeaponData& ARCPlayerState::FindOrAddWeaponDataForClass(UClass* WeaponClass)
+{
+	FWeaponData* WeaponData = FindWeaponDataForClass(WeaponClass);
+	return WeaponData != nullptr ? *WeaponData : AddWeaponDataForClass(WeaponClass);
+}
+
+// Add a weapon data for a specific class
+FWeaponData& ARCPlayerState::AddWeaponDataForClass(UClass* WeaponClass)
+{
+	// Make sure it's unique
+	FWeaponData* ExistingWeaponData = FindWeaponDataForClass(WeaponClass);
+	if (ExistingWeaponData != nullptr)
+	{
+		ASSERT(ExistingWeaponData != nullptr, "Trying to add weapon data for existing class");
+		return *ExistingWeaponData;
+	}
+
+	// Add data to the map
+	FWeaponData& WeaponData = Data.WeaponDataMap.Add(WeaponClass);
+
+	// Set the values to the default
+	ABasePlayerWeapon* DefaultWeapon = WeaponClass->GetDefaultObject<ABasePlayerWeapon>();
+	if (DefaultWeapon != nullptr)
+	{
+		FWeaponLevelInfo LevelConfigs[ABasePlayerWeapon::MAX_LEVELS];
+		DefaultWeapon->GetLevelConfigs(LevelConfigs);
+		const FWeaponConfig& Config = DefaultWeapon->GetConfig();
+
+		WeaponData.CurrentAmmo = Config.BaseMaxAmmo;
+		WeaponData.MaxAmmo = Config.BaseMaxAmmo;
+		WeaponData.XPTotalForNextLevel = LevelConfigs[1].XPNeeded;
+	}
+
+	return WeaponData;
 }

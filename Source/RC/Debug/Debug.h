@@ -7,6 +7,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogAI, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogAISpline, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogUI, Log, All);
 
 bool PrintAssertMessage(const char* Cond, const char* File, int Line);
 bool PrintAssertMessage(const char* Cond, const char* File, int Line, const char* Format, ...);

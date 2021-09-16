@@ -7,6 +7,9 @@
 #include "RCTypes.generated.h"
 
 
+/**
+ * AI states
+ */
 UENUM(BlueprintType, Category = "AI")
 enum class EAIState : uint8
 {
@@ -19,6 +22,9 @@ enum class EAIState : uint8
 	NUM_STATES	UMETA(Hidden)
 };
 
+/**
+ * Inventory slots for the player
+ */
 UENUM(BlueprintType, Category = "Inventory")
 enum class EInventorySlot : uint8
 {
@@ -30,14 +36,13 @@ enum class EInventorySlot : uint8
 	Slot6		UMETA(DisplayName = "Slot 6"),
 	Slot7		UMETA(DisplayName = "Slot 7"),
 	Slot8		UMETA(DisplayName = "Slot 8"),
-	Slot9		UMETA(DisplayName = "Slot 9"),
-	Slot10		UMETA(DisplayName = "Slot 10"),
-	Slot11		UMETA(DisplayName = "Slot 11"),
-	Slot12		UMETA(DisplayName = "Slot 12"),
 
 	NUM_SLOTS	UMETA(Hidden)
 };
 
+/**
+ * Quick slots mapping to inventory slots
+ */
 UENUM(BlueprintType, Category = "Inventory")
 enum class EQuickSlot : uint8
 {
@@ -49,36 +54,38 @@ enum class EQuickSlot : uint8
 	NUM_SLOTS	UMETA(Hidden)
 };
 
+/**
+ * Damage request
+ */
 USTRUCT(BlueprintType)
 struct FDamageRequestParams
 {
 	GENERATED_BODY()
 
-	/** Whether this was caused by the player */
+	// Whether this was caused by the player 
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	bool bFromPlayer = false;
 
-	/** Damage to deal */
+	// Damage to deal 
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	int Damage = 0;
 
-	/** Who hit us */
+	// Who hit us 
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	TWeakObjectPtr<class ABaseCharacter> Instigator = nullptr;
 
-	/** Class of what actually caused the damage */
+	// Class of what actually caused the damage
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	UClass* WeaponClass = nullptr;
 
-	/** The location the damage happened */
+	// The location the damage happened
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	FVector HitLocation = FVector::ZeroVector;
-
-	/** Describes the trace/location that caused this damage */
-	//UPROPERTY()
-	//struct FHitResult HitInfo; 
 };
 
+/**
+ * Damage reeceived
+ */
 USTRUCT(BlueprintType)
 struct FDamageReceivedParams
 {
@@ -87,32 +94,40 @@ struct FDamageReceivedParams
 	FDamageReceivedParams() = default;
 	FDamageReceivedParams(const FDamageRequestParams& RequestParams) : WeaponClass(RequestParams.WeaponClass) {}
 
-	/** Damage that was deal */
+	// Damage that was dealt
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	int DamageDealt = 0;
 
-	/** Class of what actually caused the damage */
+	// Class of what actually caused the damage
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	UClass* WeaponClass = nullptr;
 };
 
+/**
+ * Data for the bullet
+ */
 struct FBulletData
 {
+	// Damage to deal
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	int Damage = 0;
 
+	// Direction to go in
 	UPROPERTY(BlueprintReadWrite, Category = Speed)
 	FVector Direction = FVector::ZeroVector;
 
-	/** Who shot us */
+	// Who shot us
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	TWeakObjectPtr<class ABaseCharacter> Shooter = nullptr;
 
-	/** What shot us */
+	// What shot us
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	TWeakObjectPtr<class ABaseWeapon> Weapon = nullptr;
 };
 
+/**
+ * Weapon save data
+ */
 USTRUCT(BlueprintType)
 struct FWeaponData
 {
@@ -121,13 +136,26 @@ struct FWeaponData
 public:
 	void GrantDamageXP(float XP);
 
-	/** The xp to the next level */
+	// The current ammo for the weapon
+	UPROPERTY(BlueprintReadOnly, Category = Weapon, SaveGame)
+	int CurrentAmmo = 150;
+
+	// The max ammo, including upgrades
+	UPROPERTY(BlueprintReadOnly, Category = Weapon)
+	int MaxAmmo = 150;
+
+	// The xp to the next level
 	UPROPERTY(BlueprintReadOnly, Category = Weapon, SaveGame)
 	float CurrentXP = 0;
 
-	/** The current level */
+	// The xp needed to get to the next level
+	UPROPERTY(BlueprintReadOnly, Category = Weapon)
+	int XPTotalForNextLevel = 10;
+
+	// The current level
 	UPROPERTY(BlueprintReadOnly, Category = Weapon)
 	uint8 CurrentLevelIndex = 0;
 
+	// The currently loaded weapon
 	TWeakObjectPtr<class ABasePlayerWeapon> CurrentWeapon = nullptr;
 };

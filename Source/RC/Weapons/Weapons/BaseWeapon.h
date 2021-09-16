@@ -31,6 +31,10 @@ struct FWeaponConfig
 	/** The cooldown after each shot*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float BaseDamage = 1;
+
+	/** The base max ammo for the weapon. Only used for player weapons*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+	int BaseMaxAmmo = 150;
 };
 
 UCLASS(Abstract, Blueprintable, config=Game)
@@ -45,6 +49,7 @@ public:
 	ABaseWeapon();
 
 	void ApplyConfig(const FWeaponConfig& Config);
+	const FWeaponConfig& GetConfig() const { return WeaponConfig; }
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -68,7 +73,7 @@ public:
 
 	/** Returns whether the weapon can be shot now **/
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	bool CanShoot();
+	virtual bool CanShoot();
 
 	// Shoot the weapon
 	UFUNCTION()

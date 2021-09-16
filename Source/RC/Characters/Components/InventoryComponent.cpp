@@ -27,7 +27,7 @@ void UInventoryComponent::BeginPlay()
 	// Equip defaults
 	for (const FLoadoutSlotInfo& LoadoutSlotInfo : DefaultLoadout.LoadoutSlotInfos)
 	{
-		AssignSlot(LoadoutSlotInfo.Slot, LoadoutSlotInfo.Weapon);
+		AssignSlot(LoadoutSlotInfo.Slot, LoadoutSlotInfo.WeaponClass);
 	}
 
 	// Either equipped the saved slot or equip the default
@@ -39,6 +39,7 @@ void UInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
+	// Destroy the spawned weapon
 	if (EquippedWeapon != nullptr)
 	{
 		EquippedWeapon->Destroy();
@@ -103,6 +104,7 @@ ABasePlayerWeapon* UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 	ASSERT_RETURN_VALUE(NewWeapon != nullptr, nullptr, "New weapon wasn't able to be spawned");
 
 	EquippedWeapon = NewWeapon;
+	PreviouslyEquippedSlot = EquippedSlot;
 	EquippedSlot = NewSlot;
 
 	UCameraComponent* CharacterCamera = BaseCharacter->FindComponentByClass<UCameraComponent>();
@@ -129,6 +131,7 @@ ABasePlayerWeapon* UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 	return EquippedWeapon;
 }
 
+// Equip a slot as the current weapon through the quick slot.
 ABasePlayerWeapon* UInventoryComponent::EquipQuickSlot(EQuickSlot QuickSlot)
 {
 	return EquipSlot(QuickSlots[static_cast<uint8>(QuickSlot)]);
@@ -177,6 +180,59 @@ ABasePlayerWeapon* UInventoryComponent::EquipPreviousSlot()
 	return nullptr;
 }
 
+// Equip the previous weapon that was equipped
+ABasePlayerWeapon* UInventoryComponent::EquipPreviousWeapon()
+{
+	return EquipSlot(PreviouslyEquippedSlot);
+}
+
+// Get the weapon data for the inventory slot
+bool UInventoryComponent::GetWeaponData(FWeaponData& WeaponData, EInventorySlot InventorySlot)
+{
+	if (InventorySlot == EInventorySlot::NUM_SLOTS)
+	{
+		return false;
+	}
+
+	// No weapon in that slot
+	TSubclassOf<class ABasePlayerWeapon>& WeaponClass = WeaponClasses[static_cast<uint8>(InventorySlot)];
+	if (WeaponClass == NULL)
+	{
+		return false;
+	}
+
+	// Inventory not on player
+	ARCCharacter* Player = GetOwner<ARCCharacter>();
+	if (Player == nullptr)
+	{
+		return false;
+	}
+
+	ARCPlayerState* PlayerState = Player->GetPlayerState<ARCPlayerState>();
+	ASSERT_RETURN_VALUE(PlayerState != nullptr, false, "Player doesn't have RCPlayerState");
+
+	WeaponData = PlayerState->FindOrAddWeaponDataForClass(WeaponClass);
+
+	return true;
+}
+
+// Get weapon class for the slot
+bool UInventoryComponent::GetWeaponClass(TSubclassOf<class ABasePlayerWeapon>& WeaponClass, EInventorySlot InventorySlot)
+{
+	if (InventorySlot == EInventorySlot::NUM_SLOTS)
+	{
+		return false;
+	}
+
+	WeaponClass = WeaponClasses[static_cast<uint8>(InventorySlot)];
+	return WeaponClass != NULL;
+}
+
+// Is there a weapon in the given slot
+bool UInventoryComponent::IsSlotOccupied(EInventorySlot Slot)
+{
+	return (Slot != EInventorySlot::NUM_SLOTS) && (WeaponClasses[static_cast<uint8>(Slot)] != NULL);
+}
 
 // Spawn the weapon from the slot
 ABasePlayerWeapon* UInventoryComponent::SpawnSlot(EInventorySlot NewSlot)

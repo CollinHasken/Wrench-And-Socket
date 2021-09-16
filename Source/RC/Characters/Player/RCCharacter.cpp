@@ -12,6 +12,7 @@
 #include "Perception/AISense_Sight.h"
 
 #include "RC/Debug/Debug.h"
+#include "RC/Characters/Player/RCPlayerController.h"
 #include "RC/Characters/Components/InventoryComponent.h"
 #include "RC/Characters/Player/RCPlayerState.h"
 #include "RC/Util/DataSingleton.h"
@@ -22,7 +23,7 @@
 
 ARCCharacter::~ARCCharacter()
 {
-	// Reset the time dilation
+	// Reset the time dilation if its still going
 	if (LevelUpTimer.IsActive())
 	{
 		UWorld* World = GetWorld();
@@ -80,6 +81,7 @@ ARCCharacter::ARCCharacter()
 	Stimulus->RegisterWithPerceptionSystem();
 }
 
+// Save player components
 void ARCCharacter::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
@@ -93,11 +95,22 @@ void ARCCharacter::Serialize(FArchive& Ar)
 	}
 }
 
+// Called when the game starts or when spawned
+void ARCCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	ASSERT_RETURN(GEngine != nullptr);
+	UDataSingleton* Singleton = Cast<UDataSingleton>(GEngine->GameSingleton);
+	LevelDilationCurve = Singleton->LevelDilationCurve;
+}
+
 // Called every frame
 void ARCCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Slow-mo during a level up
 	if (LevelUpTimer.IsActive())
 	{
 		UWorld* World = GetWorld();
@@ -117,8 +130,19 @@ void ARCCharacter::Tick(float DeltaTime)
 		// Time has expired, invalidate it
 		LevelUpTimer.Invalidate();
 	}
+
+	// Open weapon wheel if it's been held long enough
+	if (WeaponSelectTimer.Elapsed())
+	{
+		ARCPlayerController* PlayerController = Cast<ARCPlayerController>(GetController());
+		ASSERT_RETURN(PlayerController != nullptr);
+		PlayerController->OpenWeaponSelect();
+
+		WeaponSelectTimer.Invalidate();
+	}
 }
 
+// Called when the character has given damage to someone else
 void ARCCharacter::OnDamageGiven(const FDamageReceivedParams& Params)
 {
 	ARCPlayerState* State = GetPlayerState<ARCPlayerState>();
@@ -128,17 +152,13 @@ void ARCCharacter::OnDamageGiven(const FDamageReceivedParams& Params)
 	WeaponData.GrantDamageXP(Params.DamageDealt);
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
-
+// Setup the player inputs
 void ARCCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
-	check(PlayerInputComponent);
+	ASSERT_RETURN(PlayerInputComponent != nullptr);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-	PlayerInputComponent->BindAction("NextWeapon", IE_Released, this, &ARCCharacter::EquipNextWeapon);
-	PlayerInputComponent->BindAction("PreviousWeapon", IE_Released, this, &ARCCharacter::EquipPreviousWeapon);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ARCCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ARCCharacter::MoveRight);
@@ -151,43 +171,19 @@ void ARCCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ARCCharacter::LookUpAtRate);
 
-	// Shooting
-	PlayerInputComponent->BindAxis("Shoot", this, &ARCCharacter::Shoot);
+	// Weapon inputs
+	PlayerInputComponent->BindAxis("Shoot", this, &ARCCharacter::Shoot);	
+	PlayerInputComponent->BindAction("NextWeapon", IE_Released, this, &ARCCharacter::EquipNextWeapon);
+	PlayerInputComponent->BindAction("PreviousWeapon", IE_Released, this, &ARCCharacter::EquipPreviousWeapon);
+
+	// UI
+	PlayerInputComponent->BindAction("SelectWeapon", IE_Pressed, this, &ARCCharacter::SelectWeapon);
+	PlayerInputComponent->BindAction("SelectWeapon", IE_Released, this, &ARCCharacter::SelectWeaponEnd);
+	PlayerInputComponent->BindAction("OpenPauseSettings", IE_Pressed, this, &ARCCharacter::OpenPauseSettings);
+	PlayerInputComponent->BindAction("OpenPauseHUD", IE_Pressed, this, &ARCCharacter::OpenPauseHUD);
 }
 
-void ARCCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	ASSERT_RETURN(GEngine != nullptr);
-	UDataSingleton* Singleton = Cast<UDataSingleton>(GEngine->GameSingleton);
-	LevelDilationCurve = Singleton->LevelDilationCurve;
-}
-
-void ARCCharacter::EquipNextWeapon()
-{
-	ASSERT_RETURN(Inventory != nullptr);
-	Inventory->EquipNextSlot();
-}
-
-void ARCCharacter::EquipPreviousWeapon()
-{
-	ASSERT_RETURN(Inventory != nullptr);
-	Inventory->EquipPreviousSlot();
-}
-
-void ARCCharacter::TurnAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
-}
-
-void ARCCharacter::LookUpAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
-}
-
+// Called via input for forwards/backward input
 void ARCCharacter::MoveForward(float Value)
 {
 	if ((Controller != nullptr) && (Value != 0.0f))
@@ -202,14 +198,15 @@ void ARCCharacter::MoveForward(float Value)
 	}
 }
 
+// Called via input for side to side input
 void ARCCharacter::MoveRight(float Value)
 {
-	if ( (Controller != nullptr) && (Value != 0.0f) )
+	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
-	
+
 		// get right vector 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
@@ -217,6 +214,21 @@ void ARCCharacter::MoveRight(float Value)
 	}
 }
 
+// Called via input to turn at a given rate 
+void ARCCharacter::TurnAtRate(float Rate)
+{
+	// calculate delta for this frame from the rate information
+	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+}
+
+// Called via input to turn look up/down at a given rate
+void ARCCharacter::LookUpAtRate(float Rate)
+{
+	// calculate delta for this frame from the rate information
+	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+// Called via input to update shooting the current weapon
 void ARCCharacter::Shoot(float Value)
 {	
 	ASSERT_RETURN(Inventory != nullptr);
@@ -229,10 +241,50 @@ void ARCCharacter::Shoot(float Value)
 	EquippedWeapon->UpdateTriggerStatus(ABasePlayerWeapon::TriggerValueToStatus(Value));
 }
 
+// Called via input to equip the next weapon in our inventory
+void ARCCharacter::EquipNextWeapon()
+{
+	ASSERT_RETURN(Inventory != nullptr);
+	Inventory->EquipNextSlot();
+}
+
+// Called via input to equip the previous weapon in our inventory
+void ARCCharacter::EquipPreviousWeapon()
+{
+	ASSERT_RETURN(Inventory != nullptr);
+	Inventory->EquipPreviousSlot();
+}
+
+// Called via input to swap to previous weapon or open the weapon wheel
+void ARCCharacter::SelectWeapon()
+{	
+	// If they hold it for long enough, open the weapon wheel,
+	// otherwise switch to the last equipped weapon
+	WeaponSelectTimer.Set(0.25f);
+}
+
+// Called via input once the swap weapon key isn't pressed
+void ARCCharacter::SelectWeaponEnd()
+{
+	ASSERT_RETURN(Inventory != nullptr);
+	Inventory->EquipNextSlot();
+	WeaponSelectTimer.Invalidate();
+}
+
+// Called via input to open the pause HUD
+void ARCCharacter::OpenPauseHUD()
+{}
+
+// Called via input to open the pause settings
+void ARCCharacter::OpenPauseSettings()
+{}
+
+// Called when a weapon is equipped
 void ARCCharacter::OnWeaponEquipped(ABasePlayerWeapon* Weapon)
 {
 	if (Weapon != nullptr)
 	{
+		// Listen for the level up
 		Weapon->OnLevelUp().AddDynamic(this, &ARCCharacter::OnWeaponLevelUp);
 	}
 }
@@ -250,11 +302,12 @@ void ARCCharacter::OnWeaponLevelUp(ABasePlayerWeapon* Weapon, uint8 CurrentLevel
 	}
 }
 
+// Called when the character dies
 void ARCCharacter::OnActorDied(AActor* Actor)
 {
 	Super::OnActorDied(Actor);
 
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	ARCPlayerController* PlayerController = GetController<ARCPlayerController>();
 	ASSERT_RETURN(PlayerController != nullptr);
 
 	DisableInput(PlayerController);
