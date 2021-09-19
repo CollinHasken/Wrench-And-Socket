@@ -19,15 +19,16 @@ ARCGameMode::ARCGameMode()
 {
 }
 
+// Called when a new player is spawned
 void ARCGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
-	// Calling Before Super:: so we set variables before 'beginplayingstate' is called in PlayerController (which is where we instantiate UI)
 	ARCPlayerState* PlayerState = NewPlayer->GetPlayerState<ARCPlayerState>();
 	if (PlayerState)
 	{
 		URCGameInstance* GameInstance = GetGameInstance<URCGameInstance>();
 		ASSERT_RETURN(GameInstance != nullptr);
 
+		// Load level transition data if its there
 		const TArray<uint8>& LevelTransitionData = GameInstance->GetLevelTransitionData();
 		if (LevelTransitionData.Num() != 0)
 		{
@@ -47,6 +48,7 @@ void ARCGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewP
 	}
 }
 
+// Save the persistent data for a level transition
 void ARCGameMode::SaveLevelTransitionDataToMemory(TArray<uint8>* Data)
 {
 	URCLevelTransitionSave* LevelTransitionSave = Cast<URCLevelTransitionSave>(UGameplayStatics::CreateSaveGameObject(URCLevelTransitionSave::StaticClass()));
@@ -58,9 +60,12 @@ void ARCGameMode::SaveLevelTransitionDataToMemory(TArray<uint8>* Data)
 	ARCPlayerState* PlayerState = Cast<ARCPlayerState>(GameState->PlayerArray[0]);
 	ASSERT_RETURN(PlayerState != nullptr);
 
+	// Save off the player's data
 	PlayerState->SaveForLevelTransition(LevelTransitionSave);
 
 	/*
+	* TODO
+	* Save off other actors
 	// Iterate the entire world of actors
 	for (FActorIterator It(GetWorld()); It; ++It)
 	{
@@ -75,6 +80,7 @@ void ARCGameMode::SaveLevelTransitionDataToMemory(TArray<uint8>* Data)
 	}
 	*/
 
+	// Put savegame into data array
 	UGameplayStatics::SaveGameToMemory(LevelTransitionSave, *Data);
 	UGameplayStatics::SaveGameToSlot(LevelTransitionSave, "Test", 0);
 }

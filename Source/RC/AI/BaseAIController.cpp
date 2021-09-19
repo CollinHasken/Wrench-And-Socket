@@ -36,10 +36,12 @@ ABaseAIController::ABaseAIController(const FObjectInitializer& ObjectInitializer
 	SetupPerception();
 }
 
+// Called when the game starts or when spawned
 void ABaseAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Setup behavior tree
 	ASSERT_RETURN(BehaviorTree != nullptr);
 	ASSERT_RETURN(RunBehaviorTree(BehaviorTree));
 
@@ -48,10 +50,12 @@ void ABaseAIController::BeginPlay()
 	SetupStateTransitions();
 }
 
+// When this controller is asked to possess a pawn
 void ABaseAIController::OnPossess(APawn* const PossessedPawn)
 {
 	Super::OnPossess(PossessedPawn);
 
+	// Initialize blackboard once possessed
 	if (Blackboard)
 	{
 		ASSERT_RETURN(BehaviorTree != nullptr);
@@ -59,7 +63,50 @@ void ABaseAIController::OnPossess(APawn* const PossessedPawn)
 	}
 }
 
-/** Return the blackboard asset */
+// Request the AI to change to a different state
+EAIStateChangeResult ABaseAIController::RequestState(EAIState NewState)
+{
+	if (NewState == CurrentState)
+	{
+		return EAIStateChangeResult::Succeeded;
+	}
+
+	ASSERT_RETURN_VALUE(BlackboardComponent != nullptr, EAIStateChangeResult::Failed);
+
+	// Check if there's any transition data for the current state
+	TSharedPtr<FStateTransitionBase>* CurrentStateTransition = StateTransitions.Find(CurrentState);
+	if (CurrentStateTransition != nullptr)
+	{
+		// Is there a predicate when changing from the current state to the requested one
+		TSharedPtr<FStateChangePredicateBase>* StateChangePredicate = (*CurrentStateTransition)->StateChangeMap.Find(NewState);
+		if (StateChangePredicate != nullptr && *StateChangePredicate != nullptr)
+		{
+			// Call the predicate
+			EAIStateChangeResult Result = (**StateChangePredicate)();
+
+			switch (Result)
+			{
+				case EAIStateChangeResult::Failed:
+					LOG_RETURN_VALUE(false, Result, LogAI, Warning, "State change for %s failed from %s to %s", *(GetOwner()->GetName()), *(StaticEnum<EAIState>()->GetValueAsString(CurrentState)), *(StaticEnum<EAIState>()->GetValueAsString(NewState)));
+				case EAIStateChangeResult::InProgress:
+					// The state transition will actually change the state
+					BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(RequestedStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(NewState));
+					RequestedState = NewState;
+					return Result;
+				case EAIStateChangeResult::Succeeded:
+				default:
+					break;
+			}
+		}
+	}
+
+	// Changed states immediately, finish it up now
+	RequestedState = NewState;
+	FinishStateChange();
+	return EAIStateChangeResult::Succeeded;
+}
+
+// Return the blackboard asset
 UBlackboardData* ABaseAIController::GetBlackboardAsset() const
 {
 	ASSERT_RETURN_VALUE(BlackboardComponent != nullptr, nullptr);
@@ -70,7 +117,7 @@ UBlackboardData* ABaseAIController::GetBlackboardAsset() const
 	return BehaviorTree != nullptr ? BehaviorTree->GetBlackboardAsset() : nullptr;
 }
 
-/** Add the new state transition functions to the map */
+// Add the new state transition functions to the map
 void ABaseAIController::AddStateTransition(const TStateTransitionMap& Transitions)
 {
 	for (const TPair<EAIState, TSharedPtr<FStateTransitionBase>> NewFunctionTransitionPair : Transitions)
@@ -103,60 +150,22 @@ void ABaseAIController::AddStateTransition(const TStateTransitionMap& Transition
 	}
 }
 
-/** Create new state transition function map */
+// Create new state transition function map
 void ABaseAIController::SetupStateTransitions()
 {
-	//TNewStateChangeFunctionMap ChaseMap;
-	//ChaseMap.Emplace(EAIState::Patrol, new FStateChangePredicate<ABaseAIController>(this, &ABaseAIController::test1));
-	//StateTransitions.Emplace(EAIState::Combat, new FStateTransition<ABaseAIController>(this, &ABaseAIController::UpdatePerceptionSight, CombatMap, &ABaseAIController::UpdatePerceptionSight));
+	/**
+	 * Example map adding
+	 * TNewStateChangeFunctionMap ChaseMap;
+	 * ChaseMap.Emplace(EAIState::Patrol, new FStateChangePredicate<ABaseAIController>(this, &ABaseAIController::test1));
+	 * StateTransitions.Emplace(EAIState::Combat, new FStateTransition<ABaseAIController>(this, &ABaseAIController::UpdatePerceptionSight, CombatMap, &ABaseAIController::UpdatePerceptionSight));
+	 */
 	
+	// Have the sight perception configs get updated when going into/outof these states
 	StateTransitions.Emplace(EAIState::Combat, new FStateTransition<ABaseAIController>(this, &ABaseAIController::UpdatePerceptionSight, &ABaseAIController::UpdatePerceptionSight));
 	StateTransitions.Emplace(EAIState::Chase, new FStateTransition<ABaseAIController>(this, &ABaseAIController::UpdatePerceptionSight, &ABaseAIController::UpdatePerceptionSight));
 }
 
-void ABaseAIController::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-EAIStateChangeResult ABaseAIController::RequestState(EAIState NewState)
-{
-	if (NewState == CurrentState)
-	{
-		return EAIStateChangeResult::Succeeded;
-	}
-
-	ASSERT_RETURN_VALUE(BlackboardComponent != nullptr, EAIStateChangeResult::Failed);
-
-	TSharedPtr<FStateTransitionBase>* NewStateTransition = StateTransitions.Find(CurrentState);
-	if (NewStateTransition != nullptr)
-	{
-		TSharedPtr<FStateChangePredicateBase>* StateChangePredicate = (*NewStateTransition)->StateChangeMap.Find(NewState);
-		if (StateChangePredicate != nullptr && *StateChangePredicate != nullptr)
-		{
-			EAIStateChangeResult Result = (**StateChangePredicate)();
-
-			switch (Result)
-			{
-				case EAIStateChangeResult::Failed:
-					LOG_RETURN_VALUE(false, Result, LogAI, Warning, "State change for %s failed from %s to %s", *(GetOwner()->GetName()), *(StaticEnum<EAIState>()->GetValueAsString(CurrentState)), *(StaticEnum<EAIState>()->GetValueAsString(NewState)));
-				case EAIStateChangeResult::InProgress:
-					// The state transition will actually change the state
-					BlackboardComponent->SetValue<UBlackboardKeyType_Enum>(RequestedStateKey.GetSelectedKeyID(), static_cast<UBlackboardKeyType_Enum::FDataType>(NewState));
-					RequestedState = NewState;
-					return Result;
-				case EAIStateChangeResult::Succeeded:
-				default:
-					break;
-			}
-		}
-	}
-	// Changed states immediately, set both the requested and current state
-	RequestedState = NewState;
-	FinishStateChange();
-	return EAIStateChangeResult::Succeeded;
-}
-
+// Send off events for behavior tree nodes that the state change has finished
 void ABaseAIController::OnStateTransitionFinsished()
 {
 	FAIMessage Msg(ABaseAIController::AIMessage_StateChangeFinished, this, true);
@@ -165,7 +174,7 @@ void ABaseAIController::OnStateTransitionFinsished()
 	FinishStateChange();
 }
 
-/** Actually change the state */
+// Actually change the state
 void ABaseAIController::FinishStateChange()
 {
 	// On Exit function
@@ -190,15 +199,18 @@ void ABaseAIController::FinishStateChange()
 	}
 }
 
+// When a target has been detected through stimulus
 void ABaseAIController::OnTargetDetected(AActor* DetectedActor, const FAIStimulus stimulus)
 {
+	// Update last detected actor
 	if (stimulus.WasSuccessfullySensed())
 	{
 		GetBlackBoard()->SetValueAsObject(BlackBoardKeys::LAST_DETECTED_TARGET_ACTOR, DetectedActor);
 	}
 
+	// If the stimulus came from damage, go into combat
 	if (stimulus.Type == UAISense::GetSenseID<UAISense_Damage>())
-	{
+	{		
 		if (stimulus.WasSuccessfullySensed())
 		{
 			RequestState(EAIState::Combat);
@@ -206,6 +218,7 @@ void ABaseAIController::OnTargetDetected(AActor* DetectedActor, const FAIStimulu
 	}
 	else if (stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
+		// If it was from sight, go into combat if they were seen or search if they were lost
 		ARCCharacter* Player = Cast<ARCCharacter>(DetectedActor);
 		if (Player != nullptr)
 		{
@@ -222,6 +235,7 @@ void ABaseAIController::OnTargetDetected(AActor* DetectedActor, const FAIStimulu
 	}
 }
 
+// Setup perception configs
 void ABaseAIController::SetupPerception()
 {
 	// Create and initialize sight configuration object
@@ -249,6 +263,7 @@ void ABaseAIController::SetupPerception()
 	Perception->OnTargetPerceptionUpdated.AddDynamic(this, &ABaseAIController::OnTargetDetected);
 }
 
+// Update the perception sight configs
 void ABaseAIController::UpdatePerceptionSight()
 {
 	UAIPerceptionComponent* Perception = GetPerceptionComponent();

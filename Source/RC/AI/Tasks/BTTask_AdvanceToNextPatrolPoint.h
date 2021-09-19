@@ -7,7 +7,7 @@
 #include "BTTask_AdvanceToNextPatrolPoint.generated.h"
 
 /**
- * 
+ * Advance the AI's spline follower to the next patrol point
  */
 UCLASS()
 class RC_API UBTTask_AdvanceToNextPatrolPoint : public UBTTaskNode

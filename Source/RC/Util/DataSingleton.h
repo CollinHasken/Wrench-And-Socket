@@ -10,18 +10,20 @@
 static const char* COLLISION_PRESET_PLAYERBULLET = "PlayerBullet";
 
 /**
- * 
+ * Singleton to hold global data from the editor
  */
 UCLASS(Blueprintable, BlueprintType)
 class RC_API UDataSingleton : public UObject
 {
 	GENERATED_BODY()
 public:
+	// Get the singleton
 	static UDataSingleton& Get();
+
+	// Asset loader
 	FStreamableManager AssetLoader;
 
+	// Curve to dilate time during a level up
 	UPROPERTY(EditAnywhere, Category = LODSetting)
 	class UCurveFloat* LevelDilationCurve;
-
-private:
 };

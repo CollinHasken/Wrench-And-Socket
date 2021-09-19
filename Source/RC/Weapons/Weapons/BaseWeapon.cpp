@@ -13,10 +13,8 @@
 #include "RC/Debug/Debug.h"
 #include "RC/Util/RCTypes.h"
 
-// Sets default values
 ABaseWeapon::ABaseWeapon()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Empty Root"));
@@ -25,10 +23,12 @@ ABaseWeapon::ABaseWeapon()
 	Mesh->SetupAttachment(RootComponent);
 }
 
+// After properties have been loaded
 void ABaseWeapon::PostInitProperties()
 {
 	Super::PostInitProperties();
 
+	// Save off socket
 	if (Mesh != nullptr) 
 	{
 		BulletOffsetSocket = Mesh->GetSocketByName(GetSocketName());
@@ -39,15 +39,10 @@ void ABaseWeapon::PostInitProperties()
 	}
 }
 
+// Apply the weapon config
 void ABaseWeapon::ApplyConfig(const FWeaponConfig& Config)
 {
 	WeaponConfig = Config;
-}
-
-// Called every frame
-void ABaseWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);	
 }
 
 // Set the new wielder
@@ -69,6 +64,7 @@ void ABaseWeapon::SetWielder(ABaseCharacter* NewWielder)
 	}
 }
 
+// Returns whether the weapon can start shooting
 bool ABaseWeapon::CanStartShooting()
 {
 	FTimerManager& TimerManager = GetWorldTimerManager();
@@ -87,6 +83,7 @@ bool ABaseWeapon::CanStartShooting()
 	return true;
 }
 
+// Returns whether the weapon can be shot now
 bool ABaseWeapon::CanShoot()
 {
 	FTimerManager& TimerManager = GetWorldTimerManager();
@@ -99,20 +96,21 @@ bool ABaseWeapon::CanShoot()
 	return true;
 }
 
+// Shoot the weapon
 bool ABaseWeapon::Shoot()
-{
-	
+{	
 	CooldownTimer.Set(WeaponConfig.CooldownDelay);
 	return true;
 }
 
+// Shoot the weapon at the specified target
 bool ABaseWeapon::ShootAtTarget(const FVector& TargetLocation)
 {
 	UWorld* World = GetWorld();
 	ASSERT_RETURN_VALUE(World != nullptr, false);
 
+	// Spawn the bullet at the offset
 	const FTransform& BulletTransform = BulletOffsetSocket->GetSocketTransform(Mesh);
-
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 	SpawnParams.Instigator = Wielder;
@@ -123,6 +121,7 @@ bool ABaseWeapon::ShootAtTarget(const FVector& TargetLocation)
 	FVector Trajectory = TargetLocation - BulletTransform.GetLocation();
 	Trajectory.Normalize();
 
+	// Initialize bullet to send it off
 	FBulletData BulletData;
 	BulletData.Damage = WeaponConfig.BaseDamage;
 	BulletData.Direction = Trajectory;
@@ -133,6 +132,7 @@ bool ABaseWeapon::ShootAtTarget(const FVector& TargetLocation)
 	return true;
 }
 
+// Shoot the weapon at the specified target
 bool ABaseWeapon::ShootAtTarget(ABaseCharacter* Target)
 {
 	// Get the middle of the target's bounding box
@@ -154,7 +154,7 @@ bool ABaseWeapon::ShootAtTarget(ABaseCharacter* Target)
 	return ShootAtTarget(TargetLocation);
 }
 
+// Called when the shot cooldown has expired
 void ABaseWeapon::CooldownExpired()
 {
-
 }

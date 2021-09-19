@@ -7,7 +7,7 @@
 #include "BTTask_GetClosestPatrolPosition.generated.h"
 
 /**
- * 
+ * Get the closest patrol point of the AI's spline follower
  */
 UCLASS(Blueprintable)
 class RC_API UBTTask_GetClosestPatrolPosition : public UBTTask_BlackboardBase

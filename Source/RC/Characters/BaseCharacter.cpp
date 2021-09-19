@@ -10,16 +10,15 @@
 #include "RC/Characters/Player/RCCharacter.h"
 #include "RC/Util/RCStatics.h"
 
-// Sets default values
 ABaseCharacter::ABaseCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+ 	PrimaryActorTick.bCanEverTick = true;
 
 	Health = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
 	Health->OnActorDied().AddDynamic(this, &ABaseCharacter::OnActorDied);
 }
 
+// Save character's data
 void ABaseCharacter::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
@@ -33,6 +32,7 @@ void ABaseCharacter::Serialize(FArchive& Ar)
 	}
 }
 
+// Request for this character to be damaged
 void ABaseCharacter::RequestDamage(FDamageRequestParams& Params)
 {
 	ASSERT_RETURN(Health != nullptr);
@@ -43,6 +43,7 @@ void ABaseCharacter::RequestDamage(FDamageRequestParams& Params)
 	Params.Damage = DamageToDeal;
 	float DamageDealt = Health->ApplyDamage(Params);
 
+	// Let the instigator know damage was dealt
 	ABaseCharacter* DamageInstigator = Params.Instigator.Get();
 	if (DamageInstigator != nullptr)
 	{
@@ -53,6 +54,7 @@ void ABaseCharacter::RequestDamage(FDamageRequestParams& Params)
 	}	
 }
 
+// Called when the character dies
 void ABaseCharacter::OnActorDied(AActor* Actor)
 {
 	// Disable all collision on capsule
@@ -67,6 +69,7 @@ void ABaseCharacter::OnActorDied(AActor* Actor)
 		LOG_CHECK(Capsule != nullptr, LogActor, Error, "Character %s doesn't have a capsule component", *GetName());
 	}
 
+	// Set skeletal collision
 	USkeletalMeshComponent* SkeletalMesh = GetMesh();
 	if (SkeletalMesh != nullptr)
 	{
@@ -76,7 +79,6 @@ void ABaseCharacter::OnActorDied(AActor* Actor)
 	{
 		LOG_CHECK(SkeletalMesh != nullptr, LogActor, Error, "Character %s doesn't have a mesh component", *GetName());
 	}
-
 	SetActorEnableCollision(true);
 
 	if (!bIsRagdolling)
@@ -90,6 +92,7 @@ void ABaseCharacter::OnActorDied(AActor* Actor)
 			SkeletalMesh->bBlendPhysics = true;
 		}
 
+		// Stop any movement
 		UCharacterMovementComponent* Movement = Cast<UCharacterMovementComponent>(GetMovementComponent());
 		if (Movement != nullptr)
 		{

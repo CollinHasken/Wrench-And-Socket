@@ -17,6 +17,7 @@ UBTTask_GetCurrentPatrolPosition::UBTTask_GetCurrentPatrolPosition(const FObject
 	BlackboardKey.AddVectorFilter(this, GET_MEMBER_NAME_CHECKED(UBTTask_GetCurrentPatrolPosition, BlackboardKey));
 }
 
+// Get the current patrol position from the AI's spline follower
 EBTNodeResult::Type UBTTask_GetCurrentPatrolPosition::ExecuteTask(UBehaviorTreeComponent& OwnerComponent, uint8* NodeMemory)
 {
 	UBlackboardComponent* BlackBoardComponent = OwnerComponent.GetBlackboardComponent();

@@ -3,6 +3,7 @@
 
 #include "DataSingleton.h"
 
+// Get the singleton
 UDataSingleton& UDataSingleton::Get()
 {
 	UDataSingleton* Singleton = Cast<UDataSingleton>(GEngine->GameSingleton);

@@ -11,6 +11,9 @@
 
 #include "BaseWeapon.generated.h"
 
+/**
+ * Config for every weapon
+ */
 USTRUCT(BlueprintType)
 struct FWeaponConfig
 {
@@ -20,39 +23,42 @@ struct FWeaponConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bullet)
 	TSubclassOf<class ABaseBullet> BulletClass;
 
-	/** The delay before each shot */
+	// The delay before each shot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float StartFiringDelay = 0.1f;
 
-	/** The cooldown after each shot*/
+	// The cooldown after each shot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float CooldownDelay = 0.5f;
 
-	/** The cooldown after each shot*/
+	// The base damage to deal
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float BaseDamage = 1;
 
-	/** The base max ammo for the weapon. Only used for player weapons*/
+	// The base max ammo for the weapon. Only used for player weapons
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	int BaseMaxAmmo = 150;
 };
 
+/**
+ * Basic weapon
+ */
 UCLASS(Abstract, Blueprintable, config=Game)
 class RC_API ABaseWeapon : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	static constexpr uint8 MAX_LEVELS = 10;
-
-	// Sets default values for this actor's properties
 	ABaseWeapon();
 
+	/**
+	 * Apply the weapon config
+	 * @param Config	The config to apply
+	 */
 	void ApplyConfig(const FWeaponConfig& Config);
-	const FWeaponConfig& GetConfig() const { return WeaponConfig; }
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	// Get the current config
+	const FWeaponConfig& GetConfig() const { return WeaponConfig; }
 
 	/**
 	 * Set the new wielder for this weapon
@@ -67,11 +73,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	class ABaseCharacter* GetWielder() { return Wielder; }
 
-	/** Returns whether the weapon can start shooting **/
+	// Returns whether the weapon can start shooting
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	bool CanStartShooting();
 
-	/** Returns whether the weapon can be shot now **/
+	// Returns whether the weapon can be shot now
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual bool CanShoot();
 
@@ -79,32 +85,38 @@ public:
 	UFUNCTION()
 	virtual bool Shoot();
 
-	/** Shoot the weapon at the specified target */
+	/** Shoot the weapon at the specified target
+	 * @param TargetLocation	The location to shoot at
+	 */
 	virtual bool ShootAtTarget(const FVector& TargetLocation);
 
-	/** Shoot the weapon at the specified target */
+	/** Shoot the weapon at the specified target
+	 * @param Target	The target character to shoot at
+	 */
 	virtual bool ShootAtTarget(class ABaseCharacter* Target);
 
-	/** Returns Mesh subobject **/
+	// Returns Mesh subobject
 	FORCEINLINE class USkeletalMeshComponent* GetMesh() const { return Mesh; }
 
-	/** Returns the Socket Name **/
+	// Returns the Socket Name
 	FORCEINLINE FName GetSocketName() const { return SocketName; }
 
 protected:
+	// After properties have been loaded
 	virtual void PostInitProperties() override;
 
-	/** Called when the shot cooldown has expired **/
+	// Called when the shot cooldown has expired
 	void CooldownExpired();
 	
+	// The current weapon config
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
 	FWeaponConfig WeaponConfig;
 
-	/** The main skeletal mesh associated with this weapon. */
+	// The main skeletal mesh associated with this weapon.
 	UPROPERTY(Category = Mesh, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USkeletalMeshComponent* Mesh = nullptr;
 
-	/** The socket that we'll attach this weapon to */
+	// The socket that we'll attach this weapon to
 	UPROPERTY(Category = Mesh, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FName SocketName = NAME_None;
 
@@ -119,6 +131,5 @@ protected:
 
 	// The actor wielding this weapon
 	class ABaseCharacter* Wielder = nullptr;
-private:
 };
 

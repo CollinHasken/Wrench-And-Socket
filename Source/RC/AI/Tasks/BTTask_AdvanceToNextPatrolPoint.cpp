@@ -13,6 +13,7 @@ UBTTask_AdvanceToNextPatrolPoint::UBTTask_AdvanceToNextPatrolPoint(const FObject
 	NodeName = TEXT("Advance To Next Patrol Point");
 }
 
+// Advance the AI's spline follower to the next patrol point
 EBTNodeResult::Type UBTTask_AdvanceToNextPatrolPoint::ExecuteTask(UBehaviorTreeComponent& OwnerComponent, uint8* NodeMemory)
 {
 	AAIController* Controller = Cast<AAIController>(OwnerComponent.GetOwner());

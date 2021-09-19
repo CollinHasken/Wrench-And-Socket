@@ -16,6 +16,7 @@ UBTTask_RequestStateChange::UBTTask_RequestStateChange(const FObjectInitializer&
 	NodeName = TEXT("Request State Change");
 }
 
+// Request the AI to have a state change
 EBTNodeResult::Type UBTTask_RequestStateChange::ExecuteTask(UBehaviorTreeComponent& OwnerComponent, uint8* NodeMemory)
 {
 	ABaseAIController* AIController = Cast<ABaseAIController>(OwnerComponent.GetAIOwner());

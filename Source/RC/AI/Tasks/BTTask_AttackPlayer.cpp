@@ -11,6 +11,7 @@ UBTTask_AttackPlayer::UBTTask_AttackPlayer(const FObjectInitializer& ObjectIniti
 	NodeName = TEXT("Attack Player");
 }
 
+// Attack the player
 EBTNodeResult::Type UBTTask_AttackPlayer::ExecuteTask(UBehaviorTreeComponent& OwnerComponent, uint8* NodeMemory)
 {
 	AAIController* Controller = Cast<AAIController>(OwnerComponent.GetOwner());

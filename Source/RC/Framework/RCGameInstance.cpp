@@ -6,8 +6,10 @@
 
 #include "RCGameMode.h"
 
+// Request to load a new level
 void URCGameInstance::RequestNewLevel(const FName& LevelName)
 {
+	// Save off level transition data in the game mode
 	ARCGameMode* GameMode = Cast<ARCGameMode>(UGameplayStatics::GetGameMode(this));
 	if (GameMode)
 	{

@@ -6,19 +6,18 @@
 #include "GameFramework/Actor.h"
 #include "BaseBulletHitEffect.generated.h"
 
+/**
+ * Effect to spawn when a bullet hits an actor
+ */
 UCLASS(Abstract, Blueprintable)
 class RC_API ABaseBulletHitEffect : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	ABaseBulletHitEffect();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	/** Returns exploxion fx subobject **/
+	// Returns exploxion fx subobject
 	FORCEINLINE class UParticleSystem* GetExplosionFX() const { return ExplosionFX; }
 
 protected:

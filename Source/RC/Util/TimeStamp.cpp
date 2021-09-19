@@ -11,6 +11,7 @@ static UTimeStampSubsystem* TimeStampSubsystem = nullptr;
 
 DEFINE_LOG_CATEGORY(LogTimeStamp);
 
+// Set the time until it becomes elapsed
 void FTimeStamp::Set(const float NewTime)
 {
 	if (TimeStampSubsystem == nullptr)
@@ -24,18 +25,21 @@ void FTimeStamp::Set(const float NewTime)
 	Time = StartTime + NewTime;
 }
 
+// Set the time until it becomes elapsed
 void FTimeStamp::Set(const unsigned int NewTime)
 {
 	// Forward with it in seconds
 	Set(URCStatics::MillisecondsToSeconds(NewTime));
 }
 
+// Invalidate the time stamp
 void FTimeStamp::Invalidate()
 {
 	Time = -1;
 	StartTime = -1;
 }
 
+// Test if the timer has elapsed
 bool FTimeStamp::Elapsed()
 {
 	if (!IsValid())
@@ -53,6 +57,7 @@ bool FTimeStamp::Elapsed()
 	return TimeStampSubsystem->GetWorld()->GetTimeSeconds() > Time || FMath::IsNearlyEqual(TimeStampSubsystem->GetWorld()->GetTimeSeconds(), Time);
 }
 
+// Get the time since the timer started
 float FTimeStamp::GetTimeSince()
 {
 	if (TimeStampSubsystem == nullptr)
@@ -65,11 +70,13 @@ float FTimeStamp::GetTimeSince()
 	return TimeStampSubsystem->GetWorld()->GetTimeSeconds() - StartTime;
 }
 
+// Is the time stamp valid
 bool FTimeStamp::IsValid()
 {
 	return Time != -1;
 }
 
+// Is the timer valid and waiting to elapse
 bool FTimeStamp::IsActive()
 {
 	return IsValid() && !Elapsed();

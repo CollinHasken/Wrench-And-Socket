@@ -9,56 +9,63 @@
 
 #include "BaseBullet.generated.h"
 
+/**
+ * Base bullet to spawn from a weapon when shot
+ */
 UCLASS(Abstract, Blueprintable)
 class RC_API ABaseBullet : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	ABaseBullet();
 
-	/** initial setup */
+	//  Initial setup
 	virtual void PostInitializeComponents() override;
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	/** Setup weapon properties */
+	/**
+	 * Setup weapon properties
+	 * @param BulletData	The data to init with
+	 */
 	void Init(const FBulletData& BulletData);
 
-	/** Handle hit */
+	// Handle hit
 	UFUNCTION()
 	void OnImpact(const FHitResult& HitResult);
 
-	/** Returns static mesh subobject **/
+	// Returns static mesh subobject
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return Mesh; }
-	/** Returns Movement subobject **/
+	// Returns Movement subobject
 	FORCEINLINE class UProjectileMovementComponent* GetMovement() const { return Movement; }
-	/** Returns Collision subobject **/
+	// Returns Collision subobject
 	FORCEINLINE class USphereComponent* GetCollision() const { return Collision; }
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	/** movement component */
+	// movement component
 	UPROPERTY(VisibleDefaultsOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
 	class UProjectileMovementComponent* Movement;
 
-	/** collisions */
+	// collisions
 	UPROPERTY(VisibleDefaultsOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
 	class USphereComponent* Collision;
 
-	/** Static mesh for the bullet */
+	// Static mesh for the bullet
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* Mesh;
 
+	// Effect to spawn when hit
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class ABaseBulletHitEffect> HitEffectClass;
 
+	// Damage to request on hit actor
 	int Damage = 0;
+
+	// The character that shot this
 	TWeakObjectPtr<class ABaseCharacter> Shooter = nullptr;
+
+	// The weapon that shot this
 	TWeakObjectPtr<class ABaseWeapon> Weapon = nullptr;
+
+	// The class of the weapon that shot this
 	UClass* WeaponClass = nullptr;
 };

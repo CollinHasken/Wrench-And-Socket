@@ -6,7 +6,7 @@
 
 #include "RC/Characters/Player/RCCharacter.h"
 
-
+// Save an actor's data
 void URCSaveGame::SaveActor(AActor* Actor)
 {
 	FActorSaveData ActorData;
@@ -23,6 +23,7 @@ void URCSaveGame::SaveActor(AActor* Actor)
 	SavedActors.Add(ActorData);
 }
 
+// Save the player's data
 void URCLevelTransitionSave::SavePlayer(ARCCharacter* Player)
 {
 	SavedPlayer.ActorName = Player->GetFName();
@@ -34,6 +35,7 @@ void URCLevelTransitionSave::SavePlayer(ARCCharacter* Player)
 	Player->Serialize(Ar);
 }
 
+// Load the player's data
 void URCLevelTransitionSave::LoadPlayer(ARCCharacter* Player) const
 {
 	// Convert binary array back into actor's variables

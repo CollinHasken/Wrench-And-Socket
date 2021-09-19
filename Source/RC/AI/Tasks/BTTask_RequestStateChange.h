@@ -10,7 +10,7 @@
 #include "BTTask_RequestStateChange.generated.h"
 
 /**
- * 
+ * Request the AI to have a state change
  */
 UCLASS()
 class RC_API UBTTask_RequestStateChange : public UBTTaskNode

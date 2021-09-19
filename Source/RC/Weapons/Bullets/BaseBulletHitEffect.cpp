@@ -4,7 +4,6 @@
 
 #include "Kismet/GameplayStatics.h"
 
-// Sets default values
 ABaseBulletHitEffect::ABaseBulletHitEffect()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -17,18 +16,12 @@ void ABaseBulletHitEffect::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Spawn emitter
 	if (ExplosionFX)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(this, ExplosionFX, GetActorLocation(), GetActorRotation());
 	}
 
+	// Set how long to live
 	SetLifeSpan(Lifetime);
 }
-
-// Called every frame
-void ABaseBulletHitEffect::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-

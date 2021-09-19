@@ -5,18 +5,16 @@
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
-#include "RC/Weapons/Bullets/BaseBulletHitEffect.h"
 #include "RC/Characters/BaseCharacter.h"
+#include "RC/Debug/Debug.h"
+#include "RC/Weapons/Bullets/BaseBulletHitEffect.h"
 #include "RC/Weapons/Weapons/BaseWeapon.h"
 #include "RC/Util/DataSingleton.h"
-#include "RC/Debug/Debug.h"
 #include "RC/Util/RCStatics.h"
 
-// Sets default values
 ABaseBullet::ABaseBullet()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+ 	PrimaryActorTick.bCanEverTick = true;
 
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	Collision->InitSphereRadius(5.0f);
@@ -33,7 +31,6 @@ ABaseBullet::ABaseBullet()
 	Mesh->SetSimulatePhysics(false);
 	Mesh->SetEnableGravity(false);
 	Mesh->SetupAttachment(RootComponent);
-	//Mesh->AttachTo(RootComponent, TEXT("NAME_None"), EAttachLocation::SnapToTargetIncludingScale, false);
 
 	Movement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileComp"));
 	Movement->UpdatedComponent = Collision;
@@ -43,6 +40,7 @@ ABaseBullet::ABaseBullet()
 	Movement->ProjectileGravityScale = 0.f;
 }
 
+//  Initial setup
 void ABaseBullet::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -63,13 +61,7 @@ void ABaseBullet::PostInitializeComponents()
 	*/
 }
 
-// Called when the game starts or when spawned
-void ABaseBullet::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
+// Setup weapon properties
 void ABaseBullet::Init(const FBulletData& BulletData)
 {
 	Damage = BulletData.Damage;
@@ -82,6 +74,7 @@ void ABaseBullet::Init(const FBulletData& BulletData)
 	Movement->Velocity = BulletData.Direction * Movement->InitialSpeed;
 }
 
+// Handle hit
 void ABaseBullet::OnImpact(const FHitResult& HitResult)
 {
 	Movement->StopMovementImmediately();
@@ -92,6 +85,7 @@ void ABaseBullet::OnImpact(const FHitResult& HitResult)
 		ABaseCharacter* HitBaseCharacter = Cast<ABaseCharacter>(HitActor);
 		if (HitBaseCharacter != nullptr)
 		{
+			// Request damage on hit
 			FDamageRequestParams DamageParams;
 			DamageParams.bFromPlayer = URCStatics::IsActorPlayer(Shooter.Get());
 			DamageParams.Damage = Damage;
@@ -102,6 +96,7 @@ void ABaseBullet::OnImpact(const FHitResult& HitResult)
 		}
 	}
 
+	// Spawn effect
 	if (HitEffectClass != nullptr)
 	{
 		UWorld* World = GetWorld();
@@ -111,14 +106,5 @@ void ABaseBullet::OnImpact(const FHitResult& HitResult)
 		World->SpawnActor<ABaseBulletHitEffect>(HitEffectClass, EffectTransform);
 	}
 
-	//SetLifeSpan(0.5f);
 	Destroy();
 }
-
-// Called every frame
-void ABaseBullet::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-

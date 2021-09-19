@@ -8,7 +8,7 @@
 #include "RC/Characters/BaseCharacter.h"
 #include "RC/Debug/Debug.h"
 
-/** Shoot at the player */
+// Shoot at the player
 bool ABaseEnemyWeapon::ShootAtPlayer()
 {
 	UWorld* World = GetWorld();

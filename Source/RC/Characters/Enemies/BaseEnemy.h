@@ -7,26 +7,31 @@
 #include "RC/AI/SplineFollowerComponent.h"
 #include "BaseEnemy.generated.h"
 
+/**
+ * Base enemy with AI and spline following
+ */
 UCLASS(Abstract, Blueprintable)
 class RC_API ABaseEnemy : public ABaseCharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ABaseEnemy();
 
-	/** Attack the player */
+	// Attack the player
 	void AttackPlayer();
 
-	/** Returns Spline Follower subobject **/
+	// Returns Spline Follower subobject
 	FORCEINLINE class USplineFollowerComponent* GetSplineFollower() const { return SplineFollower; }
 
-	/** Returns Weapn subobject **/
+	// Returns Weapn subobject
 	FORCEINLINE class ABaseEnemyWeapon* GetWeapon() const { return Weapon; }
 
 protected:
+	// Called when the game starts or when spawned
 	void BeginPlay() override;
+
+	// Called before the component is destroyed
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/**
@@ -36,18 +41,18 @@ protected:
 	void OnActorDied(AActor* Actor) override;
 
 private:
-	/** Health */
+	// Spawn and setup the weapon
+	void SetupWeapon();
+
+	// Health
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI, meta = (AllowPrivateAccess = "true"))
 	class USplineFollowerComponent* SplineFollower;
 
-	/** Weapon Class*/
+	// Weapon Class
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class ABaseEnemyWeapon> WeaponClass;
 
-	/** Weapon*/
+	// Weapon
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	class ABaseEnemyWeapon* Weapon;
-
-	/** Spawn and setup the weapon */
-	void SetupWeapon();
 };

@@ -7,11 +7,13 @@
 
 #include "RC/Characters/BaseCharacter.h"
 
+// Is the actor the player
 bool URCStatics::IsActorPlayer(const AActor* Actor)
 {
 	return Actor != nullptr && Actor == static_cast<AActor*>(UGameplayStatics::GetPlayerCharacter(Actor, 0));
 }
 
+// Is the actor a human
 bool URCStatics::IsActorHuman(const AActor* Actor)
 {
 	return Actor != nullptr && Cast<ABaseCharacter>(Actor) != nullptr;

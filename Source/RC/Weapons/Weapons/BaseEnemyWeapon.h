@@ -7,7 +7,7 @@
 #include "BaseEnemyWeapon.generated.h"
 
 /**
- * 
+ * Base weapon an enemy uses
  */
 UCLASS()
 class RC_API ABaseEnemyWeapon : public ABaseWeapon
@@ -16,6 +16,6 @@ class RC_API ABaseEnemyWeapon : public ABaseWeapon
 	
 public:
 
-	/** Shoot at the player */
+	// Shoot at the player
 	bool ShootAtPlayer();
 };

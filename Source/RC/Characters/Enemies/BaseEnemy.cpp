@@ -11,13 +11,27 @@
 // Sets default values
 ABaseEnemy::ABaseEnemy()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	SplineFollower = CreateDefaultSubobject<USplineFollowerComponent>(TEXT("Spline Follower"));
 }
 
-/** Attack the player */
+// Called when the game starts or when spawned
+void ABaseEnemy::BeginPlay()
+{
+	Super::BeginPlay();
+
+	SetupWeapon();
+}
+
+// Called before the component is destroyed
+void ABaseEnemy::EndPlay(const EEndPlayReason::Type)
+{
+	// Destroy weapon with us
+	Weapon->Destroy();
+}
+
+// Attack the player
 void ABaseEnemy::AttackPlayer()
 {
 	LOG_RETURN(Weapon != nullptr, LogAI, Error, "Enemy %s doesn't have weapon", *GetName());
@@ -25,11 +39,12 @@ void ABaseEnemy::AttackPlayer()
 	Weapon->ShootAtPlayer();
 }
 
-/** Called when the character dies */
+// Called when the character dies
 void ABaseEnemy::OnActorDied(AActor* Actor)
 {
 	Super::OnActorDied(Actor);
 
+	// Stop the AI on death
 	AAIController* AIController = Cast<AAIController>(GetController());
 	if (AIController)
 	{
@@ -41,19 +56,7 @@ void ABaseEnemy::OnActorDied(AActor* Actor)
 	}
 }
 
-void ABaseEnemy::BeginPlay()
-{
-	Super::BeginPlay();
-
-	SetupWeapon();
-}
-
-void ABaseEnemy::EndPlay(const EEndPlayReason::Type)
-{
-	Weapon->Destroy();
-}
-
-/** Spawn and setup the weapon */
+// Spawn and setup the weapon
 void ABaseEnemy::SetupWeapon()
 {
 	UClass* WeaponClassObj = WeaponClass.Get();

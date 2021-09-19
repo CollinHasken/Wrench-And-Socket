@@ -7,16 +7,14 @@
 #include "RC/Characters/BaseCharacter.h"
 #include "RC/Util/RCStatics.h"
 
-// Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
 
+// Save off component's save data
 FArchive& operator<<(FArchive& Ar, UHealthComponent& SObj)
 {
 	if (Ar.IsLoading() || Ar.IsSaving())
@@ -33,15 +31,6 @@ void UHealthComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentHealth = MaxHealth;	
-}
-
-
-// Called every frame
-void UHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
 // Apply damage requested
@@ -75,6 +64,7 @@ float UHealthComponent::ApplyDamage(const FDamageRequestParams& DamageParams)
 	return DamageDealt;
 }
 
+// Once we've ran out of health
 void UHealthComponent::OnKilled()
 {
 	bIsDead = true;

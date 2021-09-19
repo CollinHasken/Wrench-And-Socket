@@ -14,7 +14,7 @@ class USaveGameInterface : public UInterface
 };
 
 /**
- * 
+ * Interface for actors that should be saved
  */
 class RC_API ISaveGameInterface
 {

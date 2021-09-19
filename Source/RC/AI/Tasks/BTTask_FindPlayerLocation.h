@@ -10,7 +10,7 @@
 #include "BTTask_FindPlayerLocation.generated.h"
 
 /**
- * 
+ * Find the player's current location
  */
 UCLASS(Blueprintable)
 class RC_API UBTTask_FindPlayerLocation : public UBTTask_BlackboardBase

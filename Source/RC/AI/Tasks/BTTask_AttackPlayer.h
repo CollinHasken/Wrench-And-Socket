@@ -7,7 +7,7 @@
 #include "BTTask_AttackPlayer.generated.h"
 
 /**
- * 
+ * Attack the player
  */
 UCLASS()
 class RC_API UBTTask_AttackPlayer : public UBTTaskNode

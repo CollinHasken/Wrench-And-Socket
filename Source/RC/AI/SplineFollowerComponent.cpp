@@ -26,25 +26,15 @@ void USplineFollowerComponent::PostLoad()
 void USplineFollowerComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Set the current position to the start
 	if (SplineComponent != nullptr)
 	{
 		CurrentTargetPosition = SplineComponent->GetLocationAtSplinePoint(CurrentTargetPoint, ESplineCoordinateSpace::World);
 	}
 }
 
-
-// Called every frame
-void USplineFollowerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
-uint8 USplineFollowerComponent::GetClosestPoint()
-{
-	ASSERT_RETURN_VALUE(SplineComponent != nullptr, 0);
-	return FMath::RoundHalfFromZero(SplineComponent->FindInputKeyClosestToWorldLocation(GetOwner()->GetActorLocation()));
-}
-
+// Get the position on the spline that is closest to the actor of this component
 FVector USplineFollowerComponent::GetClosestPositionOnSpline(uint8* ClosestKey)
 {
 	ASSERT_RETURN_VALUE(SplineComponent != nullptr, FVector::ZeroVector);
@@ -60,11 +50,7 @@ FVector USplineFollowerComponent::GetClosestPositionOnSpline(uint8* ClosestKey)
 	return SplineComponent->FindLocationClosestToWorldLocation(GetOwner()->GetActorLocation(), ESplineCoordinateSpace::World);
 }
 
-FVector USplineFollowerComponent::GetCurrentPatrolPosition() const
-{
-	return CurrentTargetPosition;
-}
-
+// Advance the follower to the next point on the spline
 void USplineFollowerComponent::AdvanceToNextPatrolPoint()
 {
 	ASSERT_RETURN(SplineComponent != nullptr);
@@ -73,4 +59,11 @@ void USplineFollowerComponent::AdvanceToNextPatrolPoint()
 
 	CurrentTargetPoint = (CurrentTargetPoint + 1) % SplineComponent->GetNumberOfSplinePoints();
 	CurrentTargetPosition = SplineComponent->GetLocationAtSplinePoint(CurrentTargetPoint, ESplineCoordinateSpace::World);
+}
+
+// Get the spline point index that is closest to the actor of this compoennt
+uint8 USplineFollowerComponent::GetClosestPoint()
+{
+	ASSERT_RETURN_VALUE(SplineComponent != nullptr, 0);
+	return FMath::RoundHalfFromZero(SplineComponent->FindInputKeyClosestToWorldLocation(GetOwner()->GetActorLocation()));
 }

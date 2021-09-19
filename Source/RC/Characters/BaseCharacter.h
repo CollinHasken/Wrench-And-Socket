@@ -9,15 +9,18 @@
 
 #include "BaseCharacter.generated.h"
 
+/**
+ * Base character with health
+ */
 UCLASS(Abstract, Blueprintable)
 class RC_API ABaseCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ABaseCharacter();
 
+	// Save character's data
 	virtual void Serialize(FArchive& Ar) override;
 
 	/**

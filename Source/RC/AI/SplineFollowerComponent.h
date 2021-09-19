@@ -13,11 +13,7 @@ class RC_API USplineFollowerComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	USplineFollowerComponent();
-
-
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	/*
 	 * Get the position on the spline that is closest to the actor of this component
@@ -32,19 +28,12 @@ public:
 	 *
 	 * Returns the closest position
 	 */
-	FVector GetCurrentPatrolPosition() const;
+	FVector GetCurrentPatrolPosition() const { return CurrentTargetPosition; }
 
-	/* Advance the follower to the next point on the spline */
+	// Advance the follower to the next point on the spline
 	void AdvanceToNextPatrolPoint();
 
 private:
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, meta = (UseComponentPicker, AllowedClasses = "SplineComponent", AllowAnyActor, AllowPrivateAccess = "true"))
-	FComponentReference SplineComponentRef;
-	class USplineComponent* SplineComponent;
-
-	uint8 CurrentTargetPoint = 0;
-	FVector CurrentTargetPosition = FVector::ZeroVector;
-
 	// After the component has initialized
 	virtual void PostLoad() override;
 
@@ -53,4 +42,15 @@ private:
 
 	// Get the spline point index that is closest to the actor of this compoennt
 	uint8 GetClosestPoint();
+
+	// The spline component for the spline 
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, meta = (UseComponentPicker, AllowedClasses = "SplineComponent", AllowAnyActor, AllowPrivateAccess = "true"))
+	FComponentReference SplineComponentRef;
+	class USplineComponent* SplineComponent;
+
+	// Current target index
+	uint8 CurrentTargetPoint = 0;
+
+	// Current target position
+	FVector CurrentTargetPosition = FVector::ZeroVector;
 };

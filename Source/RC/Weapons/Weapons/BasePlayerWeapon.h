@@ -52,6 +52,9 @@ class RC_API ABasePlayerWeapon : public ABaseWeapon
 	GENERATED_BODY()
 
 public:
+	// Maximum levels
+	static constexpr uint8 MAX_LEVELS = 10;
+
 	/**
 	 * Set the weapon data that stores things like level and XP
 	 * @param InWeaponData	The weapon data for this weapon

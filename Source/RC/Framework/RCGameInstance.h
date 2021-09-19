@@ -8,7 +8,7 @@
 
 
 /**
- * 
+ * Instance of the game
  */
 UCLASS()
 class RC_API URCGameInstance : public UGameInstance
@@ -17,6 +17,11 @@ class RC_API URCGameInstance : public UGameInstance
 	
 public:
 
+	/**
+	 * Request to load a new level
+	 * Serializes and loads persistent data
+	 * @param LevelName	Name of the level map to load
+	 */
 	UFUNCTION(BlueprintCallable)
 	void RequestNewLevel(const FName& LevelName);
 

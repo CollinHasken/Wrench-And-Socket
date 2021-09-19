@@ -31,7 +31,7 @@ public:
 	 */
 	void Set(const float NewTime);
 
-	/** Invalidate the time stamp */
+	// Invalidate the time stamp
 	void Invalidate();
 
 	/**
@@ -40,6 +40,13 @@ public:
 	 * @Return True if the timer has elapsed and is valid
 	 */
 	bool Elapsed();
+
+	/**
+	 * Get the time since the timer started
+	 *
+	 * @Return The time since the timer started
+	 */
+	float GetTimeSince();
 
 	/**
 	 * Is the time stamp valid
@@ -55,19 +62,12 @@ public:
 	 */
 	bool IsActive();
 
-	/**
-	 * Get the time since the timer started
-	 *
-	 * @Return The time since the timer started
-	 */
-	float GetTimeSince();
-
 private:
 
-	/** The time when this will elapse */
+	// The time when this will elapse
 	float Time = -1;
 
-	/** The time the timer started at */
+	// The time the timer started at
 	float StartTime = -1;
 };
 

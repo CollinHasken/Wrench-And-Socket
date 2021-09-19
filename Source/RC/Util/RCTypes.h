@@ -134,6 +134,10 @@ struct FWeaponData
 	GENERATED_USTRUCT_BODY()
 
 public:
+	/**
+	 * Grant XP
+	 * @param XP The amount of XP to grant
+	 */
 	void GrantDamageXP(float XP);
 
 	// The current ammo for the weapon

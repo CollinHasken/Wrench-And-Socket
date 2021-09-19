@@ -17,6 +17,7 @@ UBTTask_GetClosestPatrolPosition::UBTTask_GetClosestPatrolPosition(const FObject
 	BlackboardKey.AddVectorFilter(this, GET_MEMBER_NAME_CHECKED(UBTTask_GetClosestPatrolPosition, BlackboardKey));
 }
 
+// Get the closest patrol point of the AI's spline follower
 EBTNodeResult::Type UBTTask_GetClosestPatrolPosition::ExecuteTask(UBehaviorTreeComponent& OwnerComponent, uint8* NodeMemory)
 {
 	UBlackboardComponent* BlackBoardComponent = OwnerComponent.GetBlackboardComponent();

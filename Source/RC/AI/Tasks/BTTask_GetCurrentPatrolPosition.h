@@ -7,7 +7,7 @@
 #include "BTTask_GetCurrentPatrolPosition.generated.h"
 
 /**
- * 
+ * Get the current patrol position from the AI's spline follower
  */
 UCLASS()
 class RC_API UBTTask_GetCurrentPatrolPosition : public UBTTask_BlackboardBase

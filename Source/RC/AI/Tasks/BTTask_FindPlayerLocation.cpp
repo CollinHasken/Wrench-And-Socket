@@ -16,6 +16,7 @@ UBTTask_FindPlayerLocation::UBTTask_FindPlayerLocation(const FObjectInitializer&
 	NodeName = TEXT("Find Player Location");
 }
 
+// Find the player's current location
 EBTNodeResult::Type UBTTask_FindPlayerLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComponent, uint8* NodeMemory)
 {
 	UBlackboardComponent* BlackBoardComponent = OwnerComponent.GetBlackboardComponent();
