@@ -125,7 +125,7 @@ void FWeaponData::SetDefaults(const FPrimaryAssetId& Id)
 		
 		CurrentAmmo = PlayerWeaponInfo->BaseMaxAmmo;
 		MaxAmmo = PlayerWeaponInfo->BaseMaxAmmo;
-		XPTotalForNextLevel = PlayerWeaponInfo->WeaponLevelConfigs[1].XPNeeded;
+		XPTotalForNextLevel = PlayerWeaponInfo->WeaponLevelConfigs[CurrentLevelIndex + 1].XPNeeded;
 	}	
 }
 

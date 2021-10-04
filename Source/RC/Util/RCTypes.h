@@ -184,25 +184,31 @@ public:
 	 */
 	void GrantDamageXP(float XP);
 
+	/**
+	 * SAVE DATA
+	 */
 	// The current ammo for the weapon
 	UPROPERTY(BlueprintReadOnly, Category = Weapon, SaveGame)
 	int CurrentAmmo = 150;
-
-	// The max ammo, including upgrades
-	UPROPERTY(BlueprintReadOnly, Category = Weapon)
-	int MaxAmmo = 150;
 
 	// The xp to the next level
 	UPROPERTY(BlueprintReadOnly, Category = Weapon, SaveGame)
 	float CurrentXP = 0;
 
+	// The current level
+	UPROPERTY(BlueprintReadOnly, Category = Weapon, SaveGame)
+	uint8 CurrentLevelIndex = 0;
+
+	/**
+	 * NOT SAVE DATA
+	 */
 	// The xp needed to get to the next level
 	UPROPERTY(BlueprintReadOnly, Category = Weapon)
 	int XPTotalForNextLevel = 10;
 
-	// The current level
+	// The max ammo, including upgrades
 	UPROPERTY(BlueprintReadOnly, Category = Weapon)
-	uint8 CurrentLevelIndex = 0;
+	int MaxAmmo = 150;
 
 	// Class of the weapon
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Loadout)
