@@ -68,7 +68,10 @@ void ABaseBullet::Init(const FBulletData& BulletData)
 	Shooter = BulletData.Shooter;
 	Weapon = BulletData.Weapon;
 	ABaseWeapon* WeaponObj = Weapon.Get();
-	WeaponClass = WeaponObj != nullptr ? WeaponObj->GetClass() : nullptr;
+	if (WeaponObj != nullptr)
+	{
+		WeaponId = WeaponObj->GetInfoId();
+	}
 
 	ASSERT_RETURN(Movement != nullptr);
 	Movement->Velocity = BulletData.Direction * Movement->InitialSpeed;
@@ -90,7 +93,7 @@ void ABaseBullet::OnImpact(const FHitResult& HitResult)
 			DamageParams.bFromPlayer = URCStatics::IsActorPlayer(Shooter.Get());
 			DamageParams.Damage = Damage;
 			DamageParams.Instigator = Shooter;
-			DamageParams.WeaponClass = WeaponClass;
+			DamageParams.CauseId = WeaponId;
 			DamageParams.HitLocation = HitResult.ImpactPoint;
 			HitBaseCharacter->RequestDamage(DamageParams);
 		}

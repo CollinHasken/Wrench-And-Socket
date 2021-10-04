@@ -74,9 +74,9 @@ struct FDamageRequestParams
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	TWeakObjectPtr<class ABaseCharacter> Instigator = nullptr;
 
-	// Class of what actually caused the damage
+	// Asset ID of what actually caused the damage
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
-	UClass* WeaponClass = nullptr;
+	FPrimaryAssetId CauseId;
 
 	// The location the damage happened
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
@@ -92,15 +92,15 @@ struct FDamageReceivedParams
 	GENERATED_BODY()
 
 	FDamageReceivedParams() = default;
-	FDamageReceivedParams(const FDamageRequestParams& RequestParams) : WeaponClass(RequestParams.WeaponClass) {}
+	FDamageReceivedParams(const FDamageRequestParams& RequestParams) : CauseId(RequestParams.CauseId) {}
 
 	// Damage that was dealt
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	int DamageDealt = 0;
 
-	// Class of what actually caused the damage
+	// Asset ID of what caused the damage
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
-	UClass* WeaponClass = nullptr;
+	FPrimaryAssetId CauseId = FPrimaryAssetId();
 };
 
 /**
@@ -125,15 +125,59 @@ struct FBulletData
 	TWeakObjectPtr<class ABaseWeapon> Weapon = nullptr;
 };
 
-/**
- * Weapon save data
- */
-USTRUCT(BlueprintType)
-struct FWeaponData
+static const FName NAME_NONE(NAME_None);
+static const FPrimaryAssetId PRIMARY_ASSERT_ID_INVALID(NAME_None, NAME_None);
+
+USTRUCT()
+struct FBaseData
 {
 	GENERATED_USTRUCT_BODY()
 
 public:
+	virtual ~FBaseData() {};
+
+	// Serialize savegame properties
+	virtual void Serialize(FArchive& Ar);
+
+	/**
+	 * Set the default values the data should have
+	 * 
+	 * @param Id	The asset Id for the data
+	 */
+	virtual void SetDefaults(const FPrimaryAssetId& Id) { AssetId = Id; };
+
+	// Get the struct of the data
+	UScriptStruct* GetStruct() const { return DataStruct; }
+
+protected:
+	UScriptStruct* DataStruct = FBaseData::StaticStruct();
+	FPrimaryAssetId AssetId = PRIMARY_ASSERT_ID_INVALID;
+};
+
+typedef TMap<FPrimaryAssetId, TSharedPtr<FBaseData>> SaveDataMap;
+typedef TMap<UScriptStruct*, SaveDataMap> SaveDataStructMap;
+
+FArchive& operator<<(FArchive& Ar, FPrimaryAssetId& SObj);
+FArchive& operator<<(FArchive& Ar, SaveDataStructMap& StateData);
+
+/**
+ * Weapon save data
+ */
+USTRUCT(BlueprintType)
+struct FWeaponData : public FBaseData
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	FWeaponData() { DataStruct = FWeaponData::StaticStruct(); }
+
+	/**
+	 * Set the default values the data should have
+	 *
+	 * @param Id	The asset Id for the data
+	 */
+	void SetDefaults(const FPrimaryAssetId& Id) override;
+
 	/**
 	 * Grant XP
 	 * @param XP The amount of XP to grant
@@ -159,6 +203,10 @@ public:
 	// The current level
 	UPROPERTY(BlueprintReadOnly, Category = Weapon)
 	uint8 CurrentLevelIndex = 0;
+
+	// Class of the weapon
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Loadout)
+	TSubclassOf<class ABasePlayerWeapon> WeaponClass;
 
 	// The currently loaded weapon
 	TWeakObjectPtr<class ABasePlayerWeapon> CurrentWeapon = nullptr;

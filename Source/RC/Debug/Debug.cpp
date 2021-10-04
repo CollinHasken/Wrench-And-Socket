@@ -3,6 +3,7 @@
 
 #include "Debug.h"
 
+#if DEBUG_ENABLED
 #include <cstdlib>
 
 #include "Containers/UnrealString.h"
@@ -49,3 +50,4 @@ bool PrintAssertMessage(const char* Cond, const char* File, int Line)
 {
 	return PrintAssertMessage(Cond, File, Line, "Assert Hit");
 }
+#endif

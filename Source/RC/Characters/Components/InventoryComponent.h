@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Templates/SubclassOf.h"
 #include "Containers/Map.h"
+#include "Templates/SubclassOf.h"
 
 #include "RC/Util/RCTypes.h"
 
@@ -13,6 +13,29 @@
 
 // Broadcasted when a weapon is equipped
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, class ABasePlayerWeapon*, Weapon);
+
+/**
+ * Info for a weapon in the inventory
+ */
+USTRUCT(BlueprintType)
+struct FInventoryWeapon
+{
+	GENERATED_BODY()
+
+	FInventoryWeapon() = default;
+
+	// Stream handle when loading it
+	TSharedPtr<struct FStreamableHandle> StreamHandle;
+
+	// Asset Id for the weapon
+	UPROPERTY(SaveGame)
+	FPrimaryAssetId AssetId = FPrimaryAssetId();
+
+	// Cached weapon info
+	const class UPlayerWeaponInfo* WeaponInfo = nullptr;
+
+	bool IsValid() const { return WeaponInfo != nullptr; }
+};
 
 /**
  * Pairing of a slot to a weapon class
@@ -26,9 +49,9 @@ struct FLoadoutSlotInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Loadout)
 	EInventorySlot Slot;
 
-	// Class of the weapon for the slot
+	// Id of the weapon info for the slot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Loadout)
-	TSubclassOf<class ABasePlayerWeapon> WeaponClass;
+	FPrimaryAssetId WeaponInfoId;
 };
 
 /**
@@ -62,10 +85,10 @@ public:
 	 * Assign a weapon to the slot. If that slot is currently equipped, it'll swap it out
 	 * 
 	 * @Param Slot The slot to set the weapon to
-	 * @Param WeaponClass The weapon class to assign
+	 * @Param WeaponInfoId The asset Id for the weapon info
 	 */
 	UFUNCTION(BlueprintCallable)
-	void AssignSlot(EInventorySlot Slot, TSubclassOf<class ABasePlayerWeapon> WeaponClass);
+	void AssignSlot(EInventorySlot Slot, const FPrimaryAssetId& WeaponInfoId);
 
 	/**
 	 * Equip a slot as the current weapon. If there's no weapon in that slot, then it won't equip
@@ -122,6 +145,15 @@ public:
 	EInventorySlot GetEquippedWeaponSlot() { return EquippedSlot; }
 
 	/**
+	 * Get weapon info for the slot
+	 *
+	 * @Param InventorySlot		The slot to get the class from
+	 * @Return The weapon info
+	 */
+	UFUNCTION(BlueprintCallable)
+	const UPlayerWeaponInfo* GetWeaponInfo(EInventorySlot InventorySlot);
+
+	/**
 	 * Get the weapon data for the inventory slot
 	 *
 	 * @Param WeaponData	The Data retrieved
@@ -139,7 +171,7 @@ public:
 	 * @Return Whether getting it was successful
 	 */
 	UFUNCTION(BlueprintCallable)
-	bool GetWeaponClass(TSubclassOf<class ABasePlayerWeapon>& WeaponClass, EInventorySlot InventorySlot);
+	bool GetWeaponClass(TSubclassOf<class ABaseWeapon>& WeaponClass, EInventorySlot InventorySlot);
 
 	/**
 	 * Is there a weapon in the given slot
@@ -162,6 +194,13 @@ protected:
 
 private:
 	/**
+	 * Called once the weapon info has been loaded
+	 * 
+	 * @Slot	The slot that was loaded
+	 */
+	void OnWeaponInfoLoaded(EInventorySlot Slot);
+
+	/**
 	 * Spawn the weapon in the given slot
 	 *
 	 * @Param Slot	The slot to get the weapon class to spawn with
@@ -177,9 +216,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Loadout, meta = (AllowPrivateAccess = "true"))
 	EInventorySlot DefaultSlot;
 
-	// The weapon classes, indexed by their associated slot
+	// The weapons, indexed by their associated slot
 	UPROPERTY(SaveGame)
-	TSubclassOf<class ABasePlayerWeapon> WeaponClasses[MAX_WEAPONS] = { NULL };
+	FInventoryWeapon Weapons[MAX_WEAPONS] = { FInventoryWeapon() };
 
 	// The quick slots, storing which inventory slot they map to
 	UPROPERTY(SaveGame)

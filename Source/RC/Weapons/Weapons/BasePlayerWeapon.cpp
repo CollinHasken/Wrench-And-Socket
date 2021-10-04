@@ -7,24 +7,40 @@
 #include "Curves/CurveFloat.h"
 
 #include "RC/Characters/BaseCharacter.h"
+#include "RC/Characters/Player/RCCharacter.h"
+#include "RC/Characters/Player/RCPlayerState.h"
 #include "RC/Debug/Debug.h"
+#include "RC/Util/RCTypes.h"
 #include "RC/Weapons/Bullets/BaseBullet.h"
 
-// Set the weapon data that stores things like level and XP
-void ABasePlayerWeapon::SetData(FWeaponData& InWeaponData)
+// After properties have been loaded
+void ABasePlayerWeapon::PostInitProperties()
 {
-	WeaponData = &InWeaponData; 
-	WeaponData->CurrentWeapon = this;
+	Super::PostInitProperties();
 
-	WeaponConfig.BaseDamage = GetCurrentLevelData().BaseDamage;	
+	PlayerWeaponInfo = Cast<UPlayerWeaponInfo>(WeaponInfo);
+	UWorld* a = GetWorld();
+	auto b = a != nullptr ? a->WorldType : EWorldType::None;
+	ASSERT(PlayerWeaponInfo != nullptr || HasAnyFlags(RF_ClassDefaultObject) || GetWorld() == nullptr || (GetWorld()->WorldType != EWorldType::Game && GetWorld()->WorldType != EWorldType::PIE));
 }
 
 // Set the new wielder
-void ABasePlayerWeapon::SetWielder(ABaseCharacter* NewWielder, UCameraComponent* NewWielderCamera)
+void ABasePlayerWeapon::SetWielder(ARCCharacter* NewWielder, UCameraComponent* NewWielderCamera)
 {
-	Super::SetWielder(NewWielder);
+	Super::SetWielder(static_cast<ABaseCharacter*>(NewWielder));
 
 	WielderCamera = NewWielderCamera;
+
+	// Setup weapon data
+	ARCPlayerState* PlayerState = NewWielder->GetPlayerState<ARCPlayerState>();
+	ASSERT_RETURN(PlayerState != nullptr, "Player doesn't have player state");
+
+	ASSERT_RETURN(PlayerWeaponInfo != nullptr);
+	WeaponData = PlayerState->FindOrAddDataForAsset<FWeaponData>(PlayerWeaponInfo->GetPrimaryAssetId());
+	ASSERT_RETURN(WeaponData != nullptr, "Weapon Data not able to be added");
+
+	WeaponData->CurrentWeapon = this;
+	RecomputeDamage();
 }
 
 // Update the trigger status
@@ -39,7 +55,7 @@ void ABasePlayerWeapon::UpdateTriggerStatus(const ETriggerStatus& NewTriggerStat
 	}
 	else if (CanStartShooting())
 	{
-		TimerManager.SetTimer(ShootTimer, this, &ABasePlayerWeapon::MaybeShoot, WeaponConfig.StartFiringDelay, true, 0);
+		TimerManager.SetTimer(ShootTimer, this, &ABasePlayerWeapon::MaybeShoot, WeaponInfo->StartFiringDelay, true, 0);
 	}
 }
 
@@ -62,23 +78,10 @@ bool ABasePlayerWeapon::Shoot()
 	// Start cooldown if it was successful
 	if (bSuccess)
 	{
-		CooldownTimer.Set(WeaponConfig.CooldownDelay);
+		ASSERT_RETURN_VALUE(PlayerWeaponInfo != nullptr, false);
+		CooldownTimer.Set(PlayerWeaponInfo->CooldownDelay);
 	}
 	return bSuccess;
-}
-
-// Grant damage XP
-void ABasePlayerWeapon::GrantDamageXP(float XP)
-{
-	ASSERT_RETURN(WeaponData != nullptr);
-	WeaponData->CurrentXP += XP;
-
-	XPGainedDelegate.Broadcast(this, WeaponData->CurrentXP, GetXPTotalForNextLevel());
-
-	if (CanLevelUp())
-	{
-		LevelUp();
-	}
 }
 
 // Get the current ammo 
@@ -95,34 +98,39 @@ int ABasePlayerWeapon::GetMaxAmmo()
 	return WeaponData->MaxAmmo;
 }
 
-// Get current level data
-const FWeaponLevelInfo& ABasePlayerWeapon::GetCurrentLevelData() const
-{
-	//ASSERT_RETURN_VALUE(WeaponData != nullptr, FWeaponLevelInfo());
-	ASSERT_RETURN_VALUE(WeaponData->CurrentLevelIndex < MAX_LEVELS, WeaponLevelConfigs[WeaponData->CurrentLevelIndex - 1]);
-	return WeaponLevelConfigs[WeaponData->CurrentLevelIndex];
-}
-
-// Get the current level
-uint8 ABasePlayerWeapon::GetCurrentLevel() const
-{
-	ASSERT_RETURN_VALUE(WeaponData != nullptr, 0);
-	return WeaponData->CurrentLevelIndex + 1;
-};
-
-// Get the current XP
-float ABasePlayerWeapon::GetCurrentXP() const
-{
-	ASSERT_RETURN_VALUE(WeaponData != nullptr, -1);
-	return WeaponData->CurrentXP;
-};
-
 // Get the total XP needed to get to the next level
 int ABasePlayerWeapon::GetXPTotalForNextLevel() const
 {
 	ASSERT_RETURN_VALUE(WeaponData != nullptr, -1);
 	return WeaponData->XPTotalForNextLevel;
 };
+
+// Get the weapon level configs
+void ABasePlayerWeapon::GetLevelConfigs(const FWeaponLevelInfo OutLevelConfigs[UPlayerWeaponInfo::MAX_LEVELS]) const
+{
+	ASSERT_RETURN(PlayerWeaponInfo != nullptr);
+	OutLevelConfigs = PlayerWeaponInfo->WeaponLevelConfigs;
+}
+
+// Get the player weapon info
+const UPlayerWeaponInfo* ABasePlayerWeapon::GetPlayerWeaponInfo() const
+{
+	// The CDO doesn't have the player weapon info cached
+	if (HasAnyFlags(EObjectFlags::RF_ClassDefaultObject))
+	{
+		return Cast<UPlayerWeaponInfo>(WeaponInfo);
+	}
+	return PlayerWeaponInfo;
+}
+
+// Determine and cache the current amount of damage the weapon should do
+void ABasePlayerWeapon::RecomputeDamage()
+{
+	const FWeaponLevelInfo* LevelInfo = GetCurrentLevelData();
+	ASSERT_RETURN(LevelInfo != nullptr);
+
+	CurrentDamage = LevelInfo->BaseDamage;
+}
 
 // Maybe perform a shot
 void ABasePlayerWeapon::MaybeShoot()
@@ -179,11 +187,34 @@ bool ABasePlayerWeapon::ShootHalf()
 	return ShootFull();
 }
 
+// Get current level data
+const FWeaponLevelInfo* ABasePlayerWeapon::GetCurrentLevelData() const
+{
+	ASSERT_RETURN_VALUE(WeaponData != nullptr, nullptr);
+	ASSERT_RETURN_VALUE(PlayerWeaponInfo != nullptr, nullptr);
+	ASSERT_RETURN_VALUE(WeaponData->CurrentLevelIndex < UPlayerWeaponInfo::MAX_LEVELS, nullptr);
+	return &(PlayerWeaponInfo->WeaponLevelConfigs[WeaponData->CurrentLevelIndex]);
+}
+
+// Get the current XP
+float ABasePlayerWeapon::GetCurrentXP() const
+{
+	ASSERT_RETURN_VALUE(WeaponData != nullptr, -1);
+	return WeaponData->CurrentXP;
+};
+
+// Get the current level
+uint8 ABasePlayerWeapon::GetCurrentLevel() const
+{
+	ASSERT_RETURN_VALUE(WeaponData != nullptr, 0);
+	return WeaponData->CurrentLevelIndex + 1;
+};
+
 // Can the weapon level up
 bool ABasePlayerWeapon::CanLevelUp() const
 {
 	ASSERT_RETURN_VALUE(WeaponData != nullptr, false);
-	if (GetCurrentLevel() >= MAX_LEVELS)
+	if (GetCurrentLevel() >= UPlayerWeaponInfo::MAX_LEVELS)
 	{
 		return false;
 	}
@@ -191,21 +222,36 @@ bool ABasePlayerWeapon::CanLevelUp() const
 	return WeaponData->CurrentXP >= GetXPTotalForNextLevel();
 }
 
+// Called when XP has been applied to the weapon data
+void ABasePlayerWeapon::OnXPGained(float XP)
+{
+	XPGainedDelegate.Broadcast(this, WeaponData->CurrentXP, GetXPTotalForNextLevel());
+
+	if (CanLevelUp())
+	{
+		LevelUp();
+	}
+}
+
 // Level up the weapon
 void ABasePlayerWeapon::LevelUp()
 {
+	ASSERT_RETURN(PlayerWeaponInfo != nullptr);
 	ASSERT_RETURN(WeaponData != nullptr);
 
 	// Increment level
 	WeaponData->CurrentLevelIndex += 1;
 
+	const FWeaponLevelInfo* LevelInfo = GetCurrentLevelData();
+	ASSERT_RETURN(LevelInfo != nullptr);
+
 	// Remove XP that was required and maybe level up again
-	WeaponData->CurrentXP -= GetCurrentLevelData().XPNeeded;
+	WeaponData->CurrentXP -= LevelInfo->XPNeeded;
 	WeaponData->CurrentXP = FMath::Max(WeaponData->CurrentXP, 0.0f);
-	WeaponData->XPTotalForNextLevel = GetCurrentLevel() >= MAX_LEVELS ? 0 : WeaponLevelConfigs[GetCurrentLevel()].XPNeeded;
+	WeaponData->XPTotalForNextLevel = GetCurrentLevel() >= UPlayerWeaponInfo::MAX_LEVELS ? 0 : PlayerWeaponInfo->WeaponLevelConfigs[GetCurrentLevel()].XPNeeded;
 
 	// Update damage
-	WeaponConfig.BaseDamage = GetCurrentLevelData().BaseDamage;
+	RecomputeDamage();
 
 	// Execute delegate
 	LevelUpDelegate.Broadcast(this, GetCurrentLevel());

@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h" 	
 #include "Containers/StaticArray.h"
 
+#include "RC/Framework/AssetDataInterface.h"
 #include "RC/Util/RCTypes.h"
 #include "RC/Util/TimeStamp.h"
 
@@ -14,11 +15,17 @@
 /**
  * Config for every weapon
  */
-USTRUCT(BlueprintType)
-struct FWeaponConfig
+
+UCLASS(BlueprintType)
+class RC_API UWeaponInfo : public UPrimaryDataAsset
 {
-	GENERATED_USTRUCT_BODY()
-	
+	GENERATED_BODY()
+
+public:
+	// The class of the weapon this info is for
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Bullet)
+	TSubclassOf<class ABaseWeapon> WeaponClass;
+
 	// The bullet class to spawn when shot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bullet)
 	TSubclassOf<class ABaseBullet> BulletClass;
@@ -38,27 +45,25 @@ struct FWeaponConfig
 	// The base max ammo for the weapon. Only used for player weapons
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	int BaseMaxAmmo = 150;
+
+	// The socket that we'll attach this weapon to
+	UPROPERTY(Category = Mesh, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FName SocketName = NAME_None;
 };
 
 /**
  * Basic weapon
  */
 UCLASS(Abstract, Blueprintable, config=Game)
-class RC_API ABaseWeapon : public AActor
+class RC_API ABaseWeapon : public AActor, public IAssetDataInterface
 {
 	GENERATED_BODY()
 	
 public:	
 	ABaseWeapon();
 
-	/**
-	 * Apply the weapon config
-	 * @param Config	The config to apply
-	 */
-	void ApplyConfig(const FWeaponConfig& Config);
-
-	// Get the current config
-	const FWeaponConfig& GetConfig() const { return WeaponConfig; }
+	// Get the info for this weapon
+	const UWeaponInfo* GetWeaponInfo() const { return WeaponInfo; }
 
 	/**
 	 * Set the new wielder for this weapon
@@ -95,11 +100,18 @@ public:
 	 */
 	virtual bool ShootAtTarget(class ABaseCharacter* Target);
 
+	// Get the current damage this weapon should deal
+	FORCEINLINE float GetDamage() { return CurrentDamage; }
+
 	// Returns Mesh subobject
 	FORCEINLINE class USkeletalMeshComponent* GetMesh() const { return Mesh; }
 
 	// Returns the Socket Name
-	FORCEINLINE FName GetSocketName() const { return SocketName; }
+	FORCEINLINE const FName& GetSocketName() const { return WeaponInfo != nullptr ? WeaponInfo->SocketName : NAME_NONE; }
+
+	// Get the Primary Data Asset Id associated with this data actor's data.
+	UFUNCTION(BlueprintCallable)
+	FPrimaryAssetId GetInfoId() const override { return WeaponInfo != nullptr ? WeaponInfo->GetPrimaryAssetId() : PRIMARY_ASSERT_ID_INVALID; }
 
 protected:
 	// After properties have been loaded
@@ -107,18 +119,14 @@ protected:
 
 	// Called when the shot cooldown has expired
 	void CooldownExpired();
-	
-	// The current weapon config
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
-	FWeaponConfig WeaponConfig;
 
 	// The main skeletal mesh associated with this weapon.
 	UPROPERTY(Category = Mesh, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USkeletalMeshComponent* Mesh = nullptr;
-
-	// The socket that we'll attach this weapon to
-	UPROPERTY(Category = Mesh, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FName SocketName = NAME_None;
+	
+	// The current weapon config
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
+	UWeaponInfo* WeaponInfo;
 
 	// Timer to keep track of when to fire while shoot is held down
 	FTimerHandle ShootTimer;
@@ -131,5 +139,8 @@ protected:
 
 	// The actor wielding this weapon
 	class ABaseCharacter* Wielder = nullptr;
+
+	// Current amount of damage each shot this weapon deals
+	float CurrentDamage = 0;
 };
 

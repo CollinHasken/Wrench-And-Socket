@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Engine/StreamableManager.h"
 #include "RCStatics.generated.h"
 
 /**
@@ -46,4 +47,21 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, Category = "Game")
 	static bool IsActorHuman(const AActor* Actor);
+
+	/**
+	 * Get the primary asset
+	 * @param AssetId The ID of the asset to retrieve
+	 * @Return The primary asset
+	 */
+	UFUNCTION(BlueprintPure, Category = "Data")
+	static const UObject* GetPrimaryAssetObject(const FPrimaryAssetId& AssetId);
+
+	template<typename AssetClass>
+	static const AssetClass* GetPrimaryAssetObject(const FPrimaryAssetId& AssetId);
+
+	static TSharedPtr<FStreamableHandle> LoadPrimaryAsset(const FPrimaryAssetId& AssetId, FStreamableDelegate DelegateToCall);
 };
+
+#if CPP
+#include "RCStatics.inl"
+#endif

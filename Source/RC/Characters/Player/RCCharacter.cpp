@@ -148,8 +148,10 @@ void ARCCharacter::OnDamageGiven(const FDamageReceivedParams& Params)
 	ARCPlayerState* State = GetPlayerState<ARCPlayerState>();
 	ASSERT_RETURN(State != nullptr);
 
-	FWeaponData& WeaponData = State->FindOrAddWeaponDataForClass(Params.WeaponClass);
-	WeaponData.GrantDamageXP(Params.DamageDealt);
+	FWeaponData* WeaponData = State->FindOrAddDataForAsset<FWeaponData>(Params.CauseId);
+	ASSERT_RETURN(WeaponData != nullptr, "Weapon Data not able to be added");
+
+	WeaponData->GrantDamageXP(Params.DamageDealt);
 }
 
 // Setup the player inputs

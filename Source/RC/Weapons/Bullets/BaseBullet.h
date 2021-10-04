@@ -66,6 +66,6 @@ protected:
 	// The weapon that shot this
 	TWeakObjectPtr<class ABaseWeapon> Weapon = nullptr;
 
-	// The class of the weapon that shot this
-	UClass* WeaponClass = nullptr;
+	// The Asset Id of the weapon that shot this
+	FPrimaryAssetId WeaponId = FPrimaryAssetId();
 };

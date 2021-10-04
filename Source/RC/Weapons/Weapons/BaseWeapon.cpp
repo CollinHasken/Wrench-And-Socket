@@ -31,18 +31,18 @@ void ABaseWeapon::PostInitProperties()
 	// Save off socket
 	if (Mesh != nullptr) 
 	{
-		BulletOffsetSocket = Mesh->GetSocketByName(GetSocketName());
+		const FName& SocketName = GetSocketName();
+		if (!SocketName.IsNone())
+		{
+			BulletOffsetSocket = Mesh->GetSocketByName(SocketName);
+		}
 	} 
 	else 
 	{
 		ASSERT(Mesh != nullptr, "Mesh wasn't created?")
 	}
-}
 
-// Apply the weapon config
-void ABaseWeapon::ApplyConfig(const FWeaponConfig& Config)
-{
-	WeaponConfig = Config;
+	CurrentDamage = WeaponInfo != nullptr ? WeaponInfo->BaseDamage : 0;
 }
 
 // Set the new wielder
@@ -51,7 +51,7 @@ void ABaseWeapon::SetWielder(ABaseCharacter* NewWielder)
 	Wielder = NewWielder;
 
 	// Attach weapon to socket
-	if (!SocketName.IsNone())
+	if (!GetSocketName().IsNone())
 	{
 		USkeletalMeshComponent* WielderMesh = Wielder->FindComponentByClass<USkeletalMeshComponent>();
 		if (WielderMesh)
@@ -59,7 +59,7 @@ void ABaseWeapon::SetWielder(ABaseCharacter* NewWielder)
 			FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules::SnapToTargetNotIncludingScale;
 			AttachmentRules.bWeldSimulatedBodies = true;
 			ASSERT_RETURN(GetMesh() != nullptr);
-			GetMesh()->AttachToComponent(WielderMesh, AttachmentRules, SocketName);
+			GetMesh()->AttachToComponent(WielderMesh, AttachmentRules, GetSocketName());
 		}
 	}
 }
@@ -99,13 +99,16 @@ bool ABaseWeapon::CanShoot()
 // Shoot the weapon
 bool ABaseWeapon::Shoot()
 {	
-	CooldownTimer.Set(WeaponConfig.CooldownDelay);
+	ASSERT_RETURN_VALUE(WeaponInfo != nullptr, false);
+	CooldownTimer.Set(WeaponInfo->CooldownDelay);
 	return true;
 }
 
 // Shoot the weapon at the specified target
 bool ABaseWeapon::ShootAtTarget(const FVector& TargetLocation)
 {
+	ASSERT_RETURN_VALUE(WeaponInfo != nullptr, false);
+
 	UWorld* World = GetWorld();
 	ASSERT_RETURN_VALUE(World != nullptr, false);
 
@@ -115,7 +118,7 @@ bool ABaseWeapon::ShootAtTarget(const FVector& TargetLocation)
 	SpawnParams.Owner = this;
 	SpawnParams.Instigator = Wielder;
 	SpawnParams.bNoFail = true;
-	ABaseBullet* Bullet = World->SpawnActor<ABaseBullet>(WeaponConfig.BulletClass, BulletTransform, SpawnParams);
+	ABaseBullet* Bullet = World->SpawnActor<ABaseBullet>(WeaponInfo->BulletClass, BulletTransform, SpawnParams);
 	ASSERT_RETURN_VALUE(Bullet != nullptr, false);
 
 	FVector Trajectory = TargetLocation - BulletTransform.GetLocation();
@@ -123,7 +126,7 @@ bool ABaseWeapon::ShootAtTarget(const FVector& TargetLocation)
 
 	// Initialize bullet to send it off
 	FBulletData BulletData;
-	BulletData.Damage = WeaponConfig.BaseDamage;
+	BulletData.Damage = GetDamage();
 	BulletData.Direction = Trajectory;
 	BulletData.Shooter = GetWielder();
 	BulletData.Weapon = this;

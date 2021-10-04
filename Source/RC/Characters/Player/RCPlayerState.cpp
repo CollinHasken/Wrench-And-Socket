@@ -7,6 +7,12 @@
 #include "RC/Characters/Player/RCCharacter.h"
 
 
+FArchive& operator<<(FArchive& Ar, FPlayerStateData& SObj)
+{
+	Ar << SObj.DataStructMap;
+	return Ar;
+}
+
 // Save player data
 void ARCPlayerState::Serialize(FArchive& Ar)
 {
@@ -16,6 +22,8 @@ void ARCPlayerState::Serialize(FArchive& Ar)
 	{
 		UClass* Class = ARCPlayerState::StaticClass();
 		Class->SerializeTaggedProperties(Ar, (uint8*)this, Class, nullptr);
+
+		Ar << SaveData;
 	}
 }
 
@@ -47,41 +55,4 @@ void ARCPlayerState::LoadForLevelTransition(const URCLevelTransitionSave* SaveGa
 	ASSERT_RETURN(ControlledCharacter != nullptr);
 
 	SaveGame->LoadPlayer(ControlledCharacter);
-}
-
-// Find or add the weapon data for a specific class
-FWeaponData& ARCPlayerState::FindOrAddWeaponDataForClass(UClass* WeaponClass)
-{
-	FWeaponData* WeaponData = FindWeaponDataForClass(WeaponClass);
-	return WeaponData != nullptr ? *WeaponData : AddWeaponDataForClass(WeaponClass);
-}
-
-// Add a weapon data for a specific class
-FWeaponData& ARCPlayerState::AddWeaponDataForClass(UClass* WeaponClass)
-{
-	// Make sure it's unique
-	FWeaponData* ExistingWeaponData = FindWeaponDataForClass(WeaponClass);
-	if (ExistingWeaponData != nullptr)
-	{
-		ASSERT(ExistingWeaponData != nullptr, "Trying to add weapon data for existing class");
-		return *ExistingWeaponData;
-	}
-
-	// Add data to the map
-	FWeaponData& WeaponData = Data.WeaponDataMap.Add(WeaponClass);
-
-	// Set the values to the default
-	ABasePlayerWeapon* DefaultWeapon = WeaponClass->GetDefaultObject<ABasePlayerWeapon>();
-	if (DefaultWeapon != nullptr)
-	{
-		FWeaponLevelInfo LevelConfigs[ABasePlayerWeapon::MAX_LEVELS];
-		DefaultWeapon->GetLevelConfigs(LevelConfigs);
-		const FWeaponConfig& Config = DefaultWeapon->GetConfig();
-
-		WeaponData.CurrentAmmo = Config.BaseMaxAmmo;
-		WeaponData.MaxAmmo = Config.BaseMaxAmmo;
-		WeaponData.XPTotalForNextLevel = LevelConfigs[1].XPNeeded;
-	}
-
-	return WeaponData;
 }

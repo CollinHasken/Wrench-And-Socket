@@ -44,6 +44,36 @@ struct FWeaponLevelInfo
 };
 
 /**
+ * Info for player weapons
+ */
+UCLASS()
+class RC_API UPlayerWeaponInfo : public UWeaponInfo
+{
+	GENERATED_BODY()
+
+public:
+	// Maximum levels
+	static constexpr uint8 MAX_LEVELS = 10;
+
+	// Info for each weapon level
+	UPROPERTY(EditDefaultsOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
+	FWeaponLevelInfo WeaponLevelConfigs[MAX_LEVELS];
+
+	// XP granted per hit
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
+	float XPPerHit = 5.0f;
+
+	// The display name for the weapon
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	FName DisplayName;
+
+	// The icon for the weapon
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess))
+	TSoftObjectPtr<class UTexture2D> IconTexture;
+};
+
+
+/**
  * The base player weapon
  */
 UCLASS(Abstract)
@@ -52,21 +82,12 @@ class RC_API ABasePlayerWeapon : public ABaseWeapon
 	GENERATED_BODY()
 
 public:
-	// Maximum levels
-	static constexpr uint8 MAX_LEVELS = 10;
-
-	/**
-	 * Set the weapon data that stores things like level and XP
-	 * @param InWeaponData	The weapon data for this weapon
-	 */
-	void SetData(FWeaponData& InWeaponData);
-
 	/**
 	 * Set the new wielder for this weapon
-	 * @param NewWielder		The pawn that is now wielding this weapon
+	 * @param NewWielder		The player that is now wielding this weapon
 	 * @param NewWielderCamera	The camera of the new wielder to be used for aiming
 	 */
-	void SetWielder(class ABaseCharacter* NewWielder, class UCameraComponent* NewWielderCamera);
+	void SetWielder(class ARCCharacter* NewWielder, class UCameraComponent* NewWielderCamera);
 
 	/**
 	 * Update the trigger status. Possibly start shooting
@@ -93,12 +114,6 @@ public:
 	// Shoot the weapon
 	virtual bool Shoot() override;
 
-	/**
-	 * Grant damage XP
-	 * @param XP	The XP to give
-	 */
-	void GrantDamageXP(float XP);
-
 	// Get the current ammo 
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	int GetCurrentAmmo();
@@ -111,15 +126,19 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	int GetXPTotalForNextLevel() const;
 
-	// Get the weapon data
-	UFUNCTION(BlueprintPure, Category = "Weapon")
-	FWeaponData& GetWeaponData() { return *WeaponData; }
-
 	/**
 	 * Get the weapon level configs
 	 * @param OutLevelConfigs	The level configs
 	 */
-	void GetLevelConfigs(const FWeaponLevelInfo OutLevelConfigs[MAX_LEVELS]) const { OutLevelConfigs = WeaponLevelConfigs; }
+	void GetLevelConfigs(const FWeaponLevelInfo OutLevelConfigs[UPlayerWeaponInfo::MAX_LEVELS]) const;
+
+	// Get the player weapon info
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	const UPlayerWeaponInfo* GetPlayerWeaponInfo() const;
+
+	// Get the weapon data
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	FWeaponData& GetWeaponData() { return *WeaponData; }
 
 	// Get the XP Gained delegate
 	FOnWeaponXPGained& OnXPGained() { return XPGainedDelegate; }
@@ -131,6 +150,14 @@ public:
 	FOnWeaponShot& OnShot() { return ShotDelegate; }
 
 protected:
+	friend FWeaponData;
+
+	// After properties have been loaded
+	virtual void PostInitProperties() override;
+
+	// Determine and cache the current amount of damage the weapon should do
+	virtual void RecomputeDamage();
+
 	// Maybe perform a shot
 	void MaybeShoot();
 
@@ -141,49 +168,42 @@ protected:
 	bool ShootHalf();
 
 	// Get current level data
-	const FWeaponLevelInfo& GetCurrentLevelData() const;
-
-	// Can the weapon level up
-	bool CanLevelUp() const;
-
-	// Get the current level
-	UFUNCTION(BlueprintPure, Category = "Weapon")
-	uint8 GetCurrentLevel() const;
+	const FWeaponLevelInfo* GetCurrentLevelData() const;
 
 	// Get the current XP
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	float GetCurrentXP() const;
 
+	// Get the current level
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	uint8 GetCurrentLevel() const;
+
+	// Can the weapon level up
+	bool CanLevelUp() const;
+
+	/**
+	 * Called when XP has been applied to the weapon data
+	 * @param XP	The XP that was gained
+	 */
+	void OnXPGained(float XP);
+
 	// Level up the weapon
 	void LevelUp();
-
-	// Info for each weapon level
-	UPROPERTY(EditDefaultsOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
-	FWeaponLevelInfo WeaponLevelConfigs[MAX_LEVELS];
-
-	// XP granted per hit
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
-	float XPPerHit = 5.0f;
 
 	// Whether the weapon is currently shooting
 	UPROPERTY(Category = Weapon, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	ETriggerStatus CurrentTriggerStatus = ETriggerStatus::NONE;
 
-	// THe display name for the weapon
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
-	FName DisplayName;
-
 	// The weapon data
 	FWeaponData* WeaponData = nullptr;
+
+	// Player weapon info
+	UPlayerWeaponInfo* PlayerWeaponInfo = nullptr;
 
 	// The camera of the wielder to use for aiming
 	class UCameraComponent* WielderCamera = nullptr;
 
 private:
-	// The icon for the weapon
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess))
-	TSoftObjectPtr<class UTexture2D> IconTexture;
-
 	// Broadcasted when the weapon gains xp
 	UPROPERTY(BlueprintAssignable, Category = Weapon, meta = (AllowPrivateAccess))
 	FOnWeaponLevelUp LevelUpDelegate;

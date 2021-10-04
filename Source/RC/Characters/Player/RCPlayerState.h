@@ -9,6 +9,7 @@
 
 #include "RCPlayerState.generated.h"
 
+
 /**
  * Player state data that will be saved
  */
@@ -18,9 +19,10 @@ struct FPlayerStateData
 	GENERATED_USTRUCT_BODY()
 
 public:
-	// Weapon data for weapons the player owns
-	UPROPERTY(SaveGame)
-	TMap<UClass*, FWeaponData> WeaponDataMap;
+	// Save player data
+	friend FArchive& operator<<(FArchive& Ar, FPlayerStateData& StateData);
+
+	SaveDataStructMap DataStructMap;
 };
 
 /**
@@ -48,31 +50,47 @@ public:
 	void LoadForLevelTransition(const class URCLevelTransitionSave* SaveGame);
 
 	/**
-	 * Find or add the weapon data for a specific class
-	 * @param WeaponClass	The class of the weapon to find
-	 * 
-	 * Returns the weapon data
+	 * Find or add the data for a specific primary asset
+	 * @param AssetId	The Id of the primary asset associated with the data
+	 *
+	 * Returns the data
 	 */
-	FWeaponData& FindOrAddWeaponDataForClass(UClass* WeaponClass);
+	template<class DataClass>
+	DataClass* FindOrAddDataForAsset(const FPrimaryAssetId& AssetId);
 
 	/**
-	 * Find the weapon data for a specific class
-	 * @param WeaponClass	The class of the weapon to find
+	 * Find the data for a specific primary asset
+	 * @param AssetId	The Id of the primary asset associated with the data
 	 *
-	 * Returns the weapon data if found
+	 * Returns the data if found
 	 */
-	inline FWeaponData* FindWeaponDataForClass(UClass* WeaponClass) { return Data.WeaponDataMap.Find(WeaponClass); }
+	template<class DataClass> 
+	DataClass* FindDataForAsset(const FPrimaryAssetId& AssetId);
 
 	/**
-	 * Add a weapon data for a specific class
-	 * @param WeaponClass	The class of the weapon to add
+	 * Add a data for a specific primary asset, checking to make sure it's unique
+	 * @param AssetId	The Id of the primary asset associated with the data
 	 *
-	 * Returns the weapon data that was added
+	 * Returns the data that was added
 	 */
-	FWeaponData& AddWeaponDataForClass(UClass* WeaponClass);
+	template<class DataClass>
+	DataClass* AddDataForAsset(const FPrimaryAssetId& AssetId);
 
 private:
+	/**
+	 * Add a data for a specific primary asset, skips checking for uniqueness
+	 * @param AssetId	The Id of the primary asset associated with the data
+	 *
+	 * Returns the data that was added
+	 */
+	template<class DataClass>
+	DataClass* AddDataForAssetQuick(const FPrimaryAssetId& AssetId);
+
 	// Player save data
 	UPROPERTY(SaveGame)
-	FPlayerStateData Data;
+	FPlayerStateData SaveData;
 };
+
+#if CPP
+#include "RCPlayerState.inl"
+#endif
