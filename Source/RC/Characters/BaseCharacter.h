@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 
+#include "RC/Framework/DamageInterface.h"
 #include "RC/Util/RCTypes.h"
 
 #include "BaseCharacter.generated.h"
@@ -13,7 +14,7 @@
  * Base character with health
  */
 UCLASS(Abstract, Blueprintable)
-class RC_API ABaseCharacter : public ACharacter
+class RC_API ABaseCharacter : public ACharacter, public IDamageInterface
 {
 	GENERATED_BODY()
 
@@ -27,7 +28,7 @@ public:
 	 * Request for this character to be damaged
 	 * @param Params	The request params
 	 */
-	void RequestDamage(FDamageRequestParams& Params);
+	void RequestDamage(FDamageRequestParams& Params) override;
 
 	/**
 	 * Called when the character has given damage to someone else

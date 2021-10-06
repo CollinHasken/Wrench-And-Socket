@@ -7,6 +7,7 @@
 
 #include "RC/Characters/BaseCharacter.h"
 #include "RC/Debug/Debug.h"
+#include "RC/Framework/DamageInterface.h"
 #include "RC/Weapons/Bullets/BaseBulletHitEffect.h"
 #include "RC/Weapons/Weapons/BaseWeapon.h"
 #include "RC/Util/DataSingleton.h"
@@ -85,8 +86,8 @@ void ABaseBullet::OnImpact(const FHitResult& HitResult)
 	const TWeakObjectPtr<AActor> HitActor = HitResult.Actor;
 	if (HitActor != nullptr)
 	{
-		ABaseCharacter* HitBaseCharacter = Cast<ABaseCharacter>(HitActor);
-		if (HitBaseCharacter != nullptr)
+		IDamageInterface* DamageableActor = Cast<IDamageInterface>(HitActor);
+		if (DamageableActor != nullptr)
 		{
 			// Request damage on hit
 			FDamageRequestParams DamageParams;
@@ -95,7 +96,7 @@ void ABaseBullet::OnImpact(const FHitResult& HitResult)
 			DamageParams.Instigator = Shooter;
 			DamageParams.CauseId = WeaponId;
 			DamageParams.HitLocation = HitResult.ImpactPoint;
-			HitBaseCharacter->RequestDamage(DamageParams);
+			DamageableActor->RequestDamage(DamageParams);
 		}
 	}
 
