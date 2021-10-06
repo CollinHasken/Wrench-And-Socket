@@ -63,6 +63,7 @@ public:
 
 	static const FName BlockAllButPlayer_ProfileName;
 	static const FName Collectible_ProfileName;
+	static const FName CollectiblePre_ProfileName;
 	static const FName CollectibleTrigger_ProfileName;
 };
 

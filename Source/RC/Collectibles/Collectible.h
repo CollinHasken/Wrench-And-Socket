@@ -8,6 +8,7 @@
 
 #include "RC/Debug/Debug.h"
 #include "RC/Framework/AssetDataInterface.h"
+#include "RC/Util/TimeStamp.h"
 
 #include "Collectible.generated.h"
 
@@ -30,7 +31,11 @@ public:
 
 	// The maximum amount of time the collectible will travel in the air
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Collectible, meta = (AllowPrivateAccess))
-	float TravelTimeMax = 1.2f;	
+	float TravelTimeMax = 1.2f;
+
+	// Time to delay between spawning and when it can be sucked in for collection
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Collectible, meta = (AllowPrivateAccess))
+	float CollectionDelay = 2;
 };
 
 UCLASS()
@@ -64,6 +69,9 @@ public:
 	FPrimaryAssetId GetInfoId() const override { return CollectibleInfo != nullptr ? CollectibleInfo->GetPrimaryAssetId() : FPrimaryAssetId(); }
 
 protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
 	// Pointer to our target we're moving towards
 	TWeakObjectPtr<class AActor> CurrentTargetW = nullptr;
 
@@ -159,10 +167,23 @@ private:
 	// The collectible data
 	struct FCollectibleData* CollectibleData = nullptr;
 
+	// Start location for the collection
 	FVector CollectStartLocation = FVector::ZeroVector;
+
+	// Current time that this has been collecting
 	float CurrentTravelTime = -1;
+
+	// Inverse of the max time for multiplying instead of dividing
 	float CurrentTravelTimeMaxInv = -1;
+
+	// Whether it's currently traveling
 	bool bIsTraveling = false;
+
+	// Whether this was collected early and should start the collection once the delay has ended
+	bool bDelayCollection = false;
+
+	// Timer for delaying when we can be collected
+	FTimeStamp CollectDelayHandle;
 
 	// The collectible mesh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

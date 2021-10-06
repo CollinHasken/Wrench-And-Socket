@@ -30,7 +30,7 @@ ACollectible::ACollectible()
 	PrimaryActorTick.bCanEverTick = true;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetCollisionProfileName(URCStatics::BlockAllButPlayer_ProfileName);
+	Mesh->SetCollisionProfileName(URCStatics::CollectiblePre_ProfileName);
 	Mesh->SetSimulatePhysics(true);
 	Mesh->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 	RootComponent = Mesh;
@@ -38,6 +38,18 @@ ACollectible::ACollectible()
 	CollectTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("Collect Trigger"));
 	CollectTrigger->SetCollisionProfileName(URCStatics::Collectible_ProfileName);
 	CollectTrigger->SetupAttachment(Mesh);
+}
+
+// Called when the game starts or when spawned
+void ACollectible::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Start the delay
+	if (CollectibleInfo != nullptr)
+	{
+		CollectDelayHandle.Set(CollectibleInfo->CollectionDelay);
+	}
 }
 
 // Called every frame
@@ -48,6 +60,17 @@ void ACollectible::Tick(float DeltaTime)
 #if DEBUG_ENABLED
 	Debug(DeltaTime);
 #endif
+
+	if (bDelayCollection)
+	{
+		if (CollectDelayHandle.Elapsed())
+		{
+			CollectDelayHandle.Invalidate();
+			bDelayCollection = false;
+
+			StartCollecting(CurrentTargetW.Get());
+		}
+	}
 
 	if (bIsTraveling)
 	{
@@ -69,6 +92,21 @@ void ACollectible::Tick(float DeltaTime)
 // Start the collection process of moving towards the target
 void ACollectible::StartCollecting(class AActor* Target)
 {
+	if (Target == nullptr)
+	{
+		return;
+	}
+
+	// If the delay is going, we'll call this function again once it's done
+	if (CollectDelayHandle.IsActive())
+	{
+		bDelayCollection = true;
+
+		// Store the target for when we recall this
+		CurrentTargetW = Target;
+		return;
+	}
+
 	// Allow us to go through things
 	Mesh->SetSimulatePhysics(false);
 	Mesh->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
