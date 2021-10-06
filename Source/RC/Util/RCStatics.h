@@ -60,6 +60,10 @@ public:
 	static const AssetClass* GetPrimaryAssetObject(const FPrimaryAssetId& AssetId);
 
 	static TSharedPtr<FStreamableHandle> LoadPrimaryAsset(const FPrimaryAssetId& AssetId, FStreamableDelegate DelegateToCall);
+
+	static const FName BlockAllButPlayer_ProfileName;
+	static const FName Collectible_ProfileName;
+	static const FName CollectibleTrigger_ProfileName;
 };
 
 #if CPP

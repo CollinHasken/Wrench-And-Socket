@@ -8,6 +8,10 @@
 
 #include "RC/Characters/BaseCharacter.h"
 
+const FName URCStatics::Collectible_ProfileName = FName(TEXT("Collectible"));
+const FName URCStatics::CollectibleTrigger_ProfileName = FName(TEXT("CollectibleTrigger"));
+const FName URCStatics::BlockAllButPlayer_ProfileName = FName(TEXT("BlockAllButPlayer"));
+
 // Is the actor the player
 bool URCStatics::IsActorPlayer(const AActor* Actor)
 {

@@ -141,3 +141,9 @@ void FWeaponData::GrantDamageXP(float XP)
 		Weapon->OnXPGained(XP);
 	}
 }
+
+// Grant an amount of the collectible
+void FCollectibleData::GrantCollectible(int Amount)
+{
+	CurrentAmount += Amount;	
+}

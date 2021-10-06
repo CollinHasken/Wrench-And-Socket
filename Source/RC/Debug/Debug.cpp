@@ -14,6 +14,7 @@
 DEFINE_LOG_CATEGORY(LogAI);
 DEFINE_LOG_CATEGORY(LogAISpline);
 DEFINE_LOG_CATEGORY(LogUI);
+DEFINE_LOG_CATEGORY(LogCollectible);
 
 bool PrintAssertMessage(const char* Cond, const char* File, int Line, const char* Format, ...)
 {

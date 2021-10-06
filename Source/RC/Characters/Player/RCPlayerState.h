@@ -9,6 +9,8 @@
 
 #include "RCPlayerState.generated.h"
 
+// Broadcasted when a collectible has been collected
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCollectibleCollected, FPrimaryAssetId, CollectibleInfoId, int, CurrentAmount);
 
 /**
  * Player state data that will be saved
@@ -50,6 +52,23 @@ public:
 	void LoadForLevelTransition(const class URCLevelTransitionSave* SaveGame);
 
 	/**
+	 * Collect the given collectible
+	 * @param Collectible	The collectible to collect
+	 */
+	void CollectCollectible(class ACollectible* Collectible);
+
+	/**
+	 * Get the collectible data for a give collectible
+	 * Needed for blueprint because templates can't be UFUNCTIONs
+	 *
+	 * @Param CollectibleData	The Data retrieved
+	 * @Param FPrimaryAssetId	The asset id for the collectible info
+	 * @Return Whether getting it was successful
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool GetCollectibleData(FCollectibleData& CollectibleData, const FPrimaryAssetId AssetId);
+
+	/**
 	 * Find or add the data for a specific primary asset
 	 * @param AssetId	The Id of the primary asset associated with the data
 	 *
@@ -76,6 +95,9 @@ public:
 	template<class DataClass>
 	DataClass* AddDataForAsset(const FPrimaryAssetId& AssetId);
 
+	// Get the Collectible Collected delegate
+	FOnCollectibleCollected& OnCollectibleCollected() { return CollectibleCollectedDelegate; }
+
 private:
 	/**
 	 * Add a data for a specific primary asset, skips checking for uniqueness
@@ -89,6 +111,10 @@ private:
 	// Player save data
 	UPROPERTY(SaveGame)
 	FPlayerStateData SaveData;
+
+	// Broadcasted when a collectible has been collected
+	UPROPERTY(BlueprintAssignable, Category = Collectible, meta = (AllowPrivateAccess))
+	FOnCollectibleCollected CollectibleCollectedDelegate;
 };
 
 #if CPP

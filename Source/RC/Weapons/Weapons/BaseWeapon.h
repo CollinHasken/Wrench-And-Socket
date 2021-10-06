@@ -15,7 +15,6 @@
 /**
  * Config for every weapon
  */
-
 UCLASS(BlueprintType)
 class RC_API UWeaponInfo : public UPrimaryDataAsset
 {
@@ -48,7 +47,7 @@ public:
 
 	// The socket that we'll attach this weapon to
 	UPROPERTY(Category = Mesh, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FName SocketName = NAME_None;
+	FName SocketName = NAME_NONE;
 };
 
 /**
@@ -111,7 +110,7 @@ public:
 
 	// Get the Primary Data Asset Id associated with this data actor's data.
 	UFUNCTION(BlueprintCallable)
-	FPrimaryAssetId GetInfoId() const override { return WeaponInfo != nullptr ? WeaponInfo->GetPrimaryAssetId() : PRIMARY_ASSERT_ID_INVALID; }
+	FPrimaryAssetId GetInfoId() const override { return WeaponInfo != nullptr ? WeaponInfo->GetPrimaryAssetId() : FPrimaryAssetId(); }
 
 protected:
 	// After properties have been loaded

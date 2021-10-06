@@ -6,6 +6,7 @@
 
 #include "RCTypes.generated.h"
 
+static const FName NAME_NONE(NAME_None);
 
 /**
  * AI states
@@ -125,9 +126,6 @@ struct FBulletData
 	TWeakObjectPtr<class ABaseWeapon> Weapon = nullptr;
 };
 
-static const FName NAME_NONE(NAME_None);
-static const FPrimaryAssetId PRIMARY_ASSERT_ID_INVALID(NAME_None, NAME_None);
-
 USTRUCT()
 struct FBaseData
 {
@@ -151,7 +149,7 @@ public:
 
 protected:
 	UScriptStruct* DataStruct = FBaseData::StaticStruct();
-	FPrimaryAssetId AssetId = PRIMARY_ASSERT_ID_INVALID;
+	FPrimaryAssetId AssetId = FPrimaryAssetId();
 };
 
 typedef TMap<FPrimaryAssetId, TSharedPtr<FBaseData>> SaveDataMap;
@@ -216,4 +214,26 @@ public:
 
 	// The currently loaded weapon
 	TWeakObjectPtr<class ABasePlayerWeapon> CurrentWeapon = nullptr;
+};
+
+/**
+ * Collectible save data
+ */
+USTRUCT(BlueprintType)
+struct FCollectibleData : public FBaseData
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	FCollectibleData() { DataStruct = FCollectibleData::StaticStruct(); }
+
+	/**
+	 * Grant an amount of the collectible
+	 * @param Amount The amount of the collectible to grant
+	 */
+	void GrantCollectible(int Amount);
+
+	// Current amount of the collectible the player has
+	UPROPERTY(BlueprintReadOnly, Category = Collectible, SaveGame)
+	int CurrentAmount = 0;
 };

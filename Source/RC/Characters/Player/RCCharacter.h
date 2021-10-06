@@ -125,6 +125,14 @@ protected:
 	void OnActorDied(AActor* Actor) override;
 
 private:
+	// On collectible overlapping with the collectible trigger
+	UFUNCTION()
+	void OnFoundCollectibleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	// On collectible overlapping with the character trigger
+	UFUNCTION()
+	void OnCollectibleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	// Camera boom positioning the camera behind the character
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
@@ -132,6 +140,10 @@ private:
 	// Follow camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+	// Trigger to start collecting
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Collectible, meta = (AllowPrivateAccess = "true"))
+	class USphereComponent* CollectibleTrigger;
 
 	// Inventory
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))

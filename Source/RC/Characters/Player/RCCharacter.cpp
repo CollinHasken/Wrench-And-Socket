@@ -4,6 +4,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
@@ -15,7 +16,9 @@
 #include "RC/Characters/Player/RCPlayerController.h"
 #include "RC/Characters/Components/InventoryComponent.h"
 #include "RC/Characters/Player/RCPlayerState.h"
+#include "RC/Collectibles/Collectible.h"
 #include "RC/Util/DataSingleton.h"
+#include "RC/Util/RCStatics.h"
 #include "RC/Weapons/Weapons/BasePlayerWeapon.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -69,6 +72,11 @@ ARCCharacter::ARCCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	// Create the trigger to detect collectibles
+	CollectibleTrigger = CreateDefaultSubobject<USphereComponent>(TEXT("CollectibleTrigger"));
+	CollectibleTrigger->SetCollisionProfileName(URCStatics::CollectibleTrigger_ProfileName);
+	CollectibleTrigger->SetupAttachment(RootComponent);
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventory"));
@@ -103,6 +111,25 @@ void ARCCharacter::BeginPlay()
 	ASSERT_RETURN(GEngine != nullptr);
 	UDataSingleton* Singleton = Cast<UDataSingleton>(GEngine->GameSingleton);
 	LevelDilationCurve = Singleton->LevelDilationCurve;
+
+	CollectibleTrigger->OnComponentBeginOverlap.AddDynamic(this, &ARCCharacter::OnFoundCollectibleBeginOverlap);
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ARCCharacter::OnCollectibleBeginOverlap);
+
+	// Check if we're overlapping actors from the start
+	TArray<AActor*> OverlappingActors;
+	CollectibleTrigger->GetOverlappingActors(OverlappingActors, ACollectible::StaticClass());
+	FHitResult EmptyResult;
+	for (AActor* OverlappingActor : OverlappingActors)
+	{
+		OnFoundCollectibleBeginOverlap(nullptr, OverlappingActor, nullptr, 0, false, EmptyResult);
+	}
+
+	OverlappingActors.Empty();
+	GetCapsuleComponent()->GetOverlappingActors(OverlappingActors, ACollectible::StaticClass());
+	for (AActor* OverlappingActor : OverlappingActors)
+	{
+		OnCollectibleBeginOverlap(nullptr, OverlappingActor, nullptr, 0, false, EmptyResult);
+	}
 }
 
 // Called every frame
@@ -323,4 +350,32 @@ void ARCCharacter::OnActorDied(AActor* Actor)
 			EquippedWeapon->UpdateTriggerStatus(ETriggerStatus::NONE);
 		}
 	}
+}
+
+// On collectible overlapping with the collectible trigger
+void ARCCharacter::OnFoundCollectibleBeginOverlap(UPrimitiveComponent*, AActor* OtherActor, UPrimitiveComponent*, int32, bool, const FHitResult&)
+{
+	ACollectible* Collectible = Cast<ACollectible>(OtherActor);
+	if (Collectible == nullptr)
+	{
+		return;
+	}
+
+	Collectible->StartCollecting(this);
+}
+
+// On collectible overlapping with the character trigger
+void ARCCharacter::OnCollectibleBeginOverlap(UPrimitiveComponent*, AActor* OtherActor, UPrimitiveComponent*, int32, bool, const FHitResult&)
+{
+	ACollectible* Collectible = Cast<ACollectible>(OtherActor);
+	if (Collectible == nullptr)
+	{
+		return;
+	}
+
+	ARCPlayerState* State = GetPlayerState<ARCPlayerState>();
+	ASSERT_RETURN(State != nullptr);
+
+	// Tell the player state to collect it as that's where the data is stored
+	State->CollectCollectible(Collectible);
 }

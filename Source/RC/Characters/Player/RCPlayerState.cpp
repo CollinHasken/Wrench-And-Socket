@@ -2,9 +2,10 @@
 #include "RCPlayerState.h"
 
 #include "RC/Debug/Debug.h"
+#include "RC/Characters/Player/RCCharacter.h"
+#include "RC/Collectibles/Collectible.h"
 #include "RC/Save/RCSaveGame.h"
 #include "RC/Weapons/Weapons/BasePlayerWeapon.h"
-#include "RC/Characters/Player/RCCharacter.h"
 
 
 FArchive& operator<<(FArchive& Ar, FPlayerStateData& SObj)
@@ -55,4 +56,31 @@ void ARCPlayerState::LoadForLevelTransition(const URCLevelTransitionSave* SaveGa
 	ASSERT_RETURN(ControlledCharacter != nullptr);
 
 	SaveGame->LoadPlayer(ControlledCharacter);
+}
+
+// Collect the given collectible
+void ARCPlayerState::CollectCollectible(ACollectible* Collectible)
+{
+	// Let the collectible actor know they've been collected
+	ASSERT_RETURN(Collectible != nullptr);
+	Collectible->OnCollected();
+
+	// Let the collectible data know it's been collected
+	FPrimaryAssetId CollectibleInfoId = Collectible->GetInfoId();
+	FCollectibleData* CollectibleData = FindDataForAsset<FCollectibleData>(CollectibleInfoId);
+	ASSERT_RETURN(CollectibleData != nullptr, "Weapon Data not able to be added");
+
+	// Let others know it's been collected
+	CollectibleCollectedDelegate.Broadcast(CollectibleInfoId, CollectibleData->CurrentAmount);
+}
+
+// Get the collectible data for a give collectible
+bool ARCPlayerState::GetCollectibleData(FCollectibleData& CollectibleData, const FPrimaryAssetId AssetId)
+{
+	FCollectibleData* Data = FindOrAddDataForAsset<FCollectibleData>(AssetId);
+	if (Data != nullptr)
+	{
+		CollectibleData = *Data;
+	}
+	return Data != nullptr;
 }
