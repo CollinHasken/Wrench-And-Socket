@@ -42,6 +42,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
+	// Get the currently equipped weapon
+	class ABaseWeapon* GetEquippedWeapon() const override;
+
 	// Returns CameraBoom subobject
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	// Returns FollowCamera subobject
@@ -79,11 +82,23 @@ protected:
 	 */
 	void LookUpAtRate(float Rate);
 
+	// Called via input to attack with the wrench
+	void WrenchAttack();
+
+	// Called via input to attack with full trigger
+	void FullAttack();
+
+	// Called via input to attack with half trigger
+	void HalfAttack();
+
+	// Called via input to stop attacking
+	void StopAttack();
+
 	/** 
-	 * Called via input to update shooting the current weapon 
-	 * @param Value	This is a normalized value of the percentage the shoot trigger is held
+	 * Called via input to update attacking with the current weapon 
+	 * @param Value	This is a normalized value of the percentage the trigger is held
 	 */
-	void Shoot(float Value);
+	void Attack(float Value);
 
 	// Called via input to equip the next weapon in our inventory
 	void EquipNextWeapon();
@@ -106,9 +121,10 @@ protected:
 	/**
 	 * Called when a weapon is equipped
 	 * @param Weapon	The weapon that was equipped
+	 * @param Slot		The slot the weapon is equipped in
 	 */
 	UFUNCTION()
-	void OnWeaponEquipped(class ABasePlayerWeapon* Weapon);
+	void OnWeaponEquipped(class ABasePlayerWeapon* Weapon, EInventorySlot Slot);
 
 	/**
 	 * Called when the equipped weapon levels up
@@ -155,6 +171,8 @@ private:
 
 	// Stimuli Source for AI perception
 	class UAIPerceptionStimuliSourceComponent* Stimulus;
+
+	ETriggerStatus TriggerOverride = ETriggerStatus::NONE;
 
 	// Timer to keep track of level up slowmo
 	FTimeStamp LevelUpTimer;

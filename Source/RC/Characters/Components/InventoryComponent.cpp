@@ -5,7 +5,7 @@
 #include "Engine/StreamableManager.h"
 
 #include "RC/Characters/BaseCharacter.h"
-#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
+#include "RC/Weapons/Weapons/PlayerWeapons/BasePlayerWeapon.h"
 #include "RC/Debug/Debug.h"
 #include "RC/Util/RCStatics.h"
 #include "RC/Characters/Player/RCCharacter.h"
@@ -127,12 +127,10 @@ ABasePlayerWeapon* UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 	PreviouslyEquippedSlot = EquippedSlot;
 	EquippedSlot = NewSlot;
 
-	UCameraComponent* CharacterCamera = Player->FindComponentByClass<UCameraComponent>();
-
 	// Tell weapon who the owner is
-	EquippedWeapon->SetWielder(Player, CharacterCamera);
+	EquippedWeapon->SetWielder(Player);
 
-	WeaponEquippedDelegate.Broadcast(EquippedWeapon);
+	WeaponEquippedDelegate.Broadcast(EquippedWeapon, EquippedSlot);
 
 	return EquippedWeapon;
 }
@@ -155,12 +153,18 @@ ABasePlayerWeapon* UInventoryComponent::EquipNextSlot()
 	uint8 InventorySlotIndex = (static_cast<uint8>(EquippedSlot) + 1) % static_cast<uint8>(EInventorySlot::NUM_SLOTS);
 	for (; InventorySlotIndex != static_cast<uint8>(EquippedSlot); InventorySlotIndex = (InventorySlotIndex + 1) % static_cast<uint8>(EInventorySlot::NUM_SLOTS))
 	{
-		if (!IsSlotOccupied(static_cast<EInventorySlot>(InventorySlotIndex)))
+		EInventorySlot InventorySlot = static_cast<EInventorySlot>(InventorySlotIndex);
+		if (!URCStatics::IsInventorySlotForPrimaryWeapon(InventorySlot))
 		{
 			continue;
 		}
 
-		return EquipSlot(static_cast<EInventorySlot>(InventorySlotIndex));
+		if (!IsSlotOccupied(InventorySlot))
+		{
+			continue;
+		}
+
+		return EquipSlot(InventorySlot);
 	}
 	return nullptr;
 }
@@ -176,12 +180,18 @@ ABasePlayerWeapon* UInventoryComponent::EquipPreviousSlot()
 			InventorySlotIndex = static_cast<uint8>(EInventorySlot::NUM_SLOTS) - 1;
 		}
 
-		if (!IsSlotOccupied(static_cast<EInventorySlot>(InventorySlotIndex)))
+		EInventorySlot InventorySlot = static_cast<EInventorySlot>(InventorySlotIndex);
+		if (!URCStatics::IsInventorySlotForPrimaryWeapon(InventorySlot))
 		{
 			continue;
 		}
 
-		return EquipSlot(static_cast<EInventorySlot>(InventorySlotIndex));
+		if (!IsSlotOccupied(InventorySlot))
+		{
+			continue;
+		}
+
+		return EquipSlot(InventorySlot);
 	}
 	return nullptr;
 }
@@ -193,7 +203,7 @@ ABasePlayerWeapon* UInventoryComponent::EquipPreviousWeapon()
 }
 
 // Get weapon info for the slot
-const UPlayerWeaponInfo* UInventoryComponent::GetWeaponInfo(EInventorySlot InventorySlot)
+const UPlayerWeaponInfo* UInventoryComponent::GetWeaponInfo(EInventorySlot InventorySlot)  const
 {
 	if (InventorySlot == EInventorySlot::NUM_SLOTS)
 	{
@@ -204,39 +214,37 @@ const UPlayerWeaponInfo* UInventoryComponent::GetWeaponInfo(EInventorySlot Inven
 }
 
 // Get the weapon data for the inventory slot
-bool UInventoryComponent::GetWeaponData(FWeaponData& WeaponData, EInventorySlot InventorySlot)
+UPlayerWeaponData* UInventoryComponent::GetWeaponData(EInventorySlot InventorySlot)
 {
 	if (InventorySlot == EInventorySlot::NUM_SLOTS)
 	{
-		return false;
+		return nullptr;
 	}
 
 	// No weapon in that slot
 	if (!IsSlotOccupied(InventorySlot))
 	{
-		return false;
+		return nullptr;
 	}
 
 	// Inventory not on player
 	ARCCharacter* Player = GetOwner<ARCCharacter>();
 	if (Player == nullptr)
 	{
-		return false;
+		return nullptr;
 	}
 
 	ARCPlayerState* PlayerState = Player->GetPlayerState<ARCPlayerState>();
-	ASSERT_RETURN_VALUE(PlayerState != nullptr, false, "Player doesn't have RCPlayerState");
+	ASSERT_RETURN_VALUE(PlayerState != nullptr, nullptr, "Player doesn't have RCPlayerState");
 
-	FWeaponData* FoundWeaponData = PlayerState->FindOrAddDataForAsset<FWeaponData>(Weapons[static_cast<uint8>(InventorySlot)].AssetId);
-	ASSERT_RETURN_VALUE(FoundWeaponData != nullptr, false, "Weapon Data not able to be added");
+	UPlayerWeaponData* FoundWeaponData = PlayerState->FindOrAddDataForAsset<UPlayerWeaponData>(Weapons[static_cast<uint8>(InventorySlot)].AssetId);
+	ASSERT_RETURN_VALUE(FoundWeaponData != nullptr, nullptr, "Weapon Data not able to be added");
 	
-	WeaponData = *FoundWeaponData;
-
-	return true;
+	return FoundWeaponData;
 }
 
 // Get weapon class for the slot
-bool UInventoryComponent::GetWeaponClass(TSubclassOf<class ABaseWeapon>& WeaponClass, EInventorySlot InventorySlot)
+bool UInventoryComponent::GetWeaponClass(TSubclassOf<class ABaseWeapon>& WeaponClass, EInventorySlot InventorySlot)  const
 {
 	if (!IsSlotOccupied(InventorySlot))
 	{
@@ -248,7 +256,7 @@ bool UInventoryComponent::GetWeaponClass(TSubclassOf<class ABaseWeapon>& WeaponC
 }
 
 // Is there a weapon in the given slot
-bool UInventoryComponent::IsSlotOccupied(EInventorySlot Slot)
+bool UInventoryComponent::IsSlotOccupied(EInventorySlot Slot) const
 {
 	return (Slot != EInventorySlot::NUM_SLOTS) && (Weapons[static_cast<uint8>(Slot)].IsValid());
 }

@@ -12,7 +12,7 @@
 #include "InventoryComponent.generated.h"
 
 // Broadcasted when a weapon is equipped
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, class ABasePlayerWeapon*, Weapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponEquipped, class ABasePlayerWeapon*, Weapon, EInventorySlot, Slot);
 
 /**
  * Info for a weapon in the inventory
@@ -133,16 +133,16 @@ public:
 	 * 
 	 * @Return the equipped weapon
 	 */
-	UFUNCTION(BlueprintCallable)
-	class ABasePlayerWeapon* GetEquippedWeapon() { return EquippedWeapon; }
+	UFUNCTION(BlueprintPure)
+	class ABasePlayerWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 
 	/**
 	 * Return the currently equipped weapon slot
 	 *
 	 * @Return the equipped weapon slot
 	 */
-	UFUNCTION(BlueprintCallable)
-	EInventorySlot GetEquippedWeaponSlot() { return EquippedSlot; }
+	UFUNCTION(BlueprintPure)
+	EInventorySlot GetEquippedWeaponSlot() const { return EquippedSlot; }
 
 	/**
 	 * Get weapon info for the slot
@@ -150,18 +150,17 @@ public:
 	 * @Param InventorySlot		The slot to get the class from
 	 * @Return The weapon info
 	 */
-	UFUNCTION(BlueprintCallable)
-	const UPlayerWeaponInfo* GetWeaponInfo(EInventorySlot InventorySlot);
+	UFUNCTION(BlueprintPure)
+	const UPlayerWeaponInfo* GetWeaponInfo(EInventorySlot InventorySlot) const;
 
 	/**
 	 * Get the weapon data for the inventory slot
 	 *
-	 * @Param WeaponData	The Data retrieved
-	 * @Param InventorySlot The slot to get the data for
-	 * @Return Whether getting it was successful
+	 * @Param InventorySlot		The slot to get the data for
+	 * @Return The Data retrieved
 	 */
 	UFUNCTION(BlueprintCallable)
-	bool GetWeaponData(FWeaponData& WeaponData, EInventorySlot InventorySlot);
+	UPlayerWeaponData* GetWeaponData(EInventorySlot InventorySlot);
 
 	/**
 	 * Get weapon class for the slot
@@ -170,8 +169,8 @@ public:
 	 * @Param InventorySlot The slot to get the class from
 	 * @Return Whether getting it was successful
 	 */
-	UFUNCTION(BlueprintCallable)
-	bool GetWeaponClass(TSubclassOf<class ABaseWeapon>& WeaponClass, EInventorySlot InventorySlot);
+	UFUNCTION(BlueprintPure)
+	bool GetWeaponClass(TSubclassOf<class ABaseWeapon>& WeaponClass, EInventorySlot InventorySlot) const;
 
 	/**
 	 * Is there a weapon in the given slot
@@ -179,8 +178,8 @@ public:
 	 * @Param Slot	The slot to check
 	 * @Return Whether there is a weapon
 	 */
-	UFUNCTION(BlueprintCallable)
-	bool IsSlotOccupied(EInventorySlot Slot);
+	UFUNCTION(BlueprintPure)
+	bool IsSlotOccupied(EInventorySlot Slot) const;
 
 	// Get the Weapon Equipped delegate
 	FOnWeaponEquipped& OnWeaponEquipped() { return WeaponEquippedDelegate; }

@@ -39,28 +39,28 @@ public:
 	 * 
 	 * @Return True if the timer has elapsed and is valid
 	 */
-	bool Elapsed();
+	bool Elapsed() const;
 
 	/**
 	 * Get the time since the timer started
 	 *
 	 * @Return The time since the timer started
 	 */
-	float GetTimeSince();
+	float GetTimeSince() const;
 
 	/**
 	 * Is the time stamp valid
 	 *
 	 * @Return True if the timestamp has been set
 	 */
-	bool IsValid();
+	bool IsValid() const;
 
 	/**
 	 * Is the timer valid and waiting to elapse
 	 * 
 	 * @Return True if the timestamp is valid and nto elapsed
 	 */
-	bool IsActive();
+	bool IsActive() const;
 
 private:
 

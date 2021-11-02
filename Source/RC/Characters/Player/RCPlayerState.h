@@ -22,9 +22,11 @@ struct FPlayerStateData
 
 public:
 	// Save player data
-	friend FArchive& operator<<(FArchive& Ar, FPlayerStateData& StateData);
+	void Serialize(FArchive& Ar, ARCPlayerState& PlayerState);
 
-	SaveDataStructMap DataStructMap;
+	// Data for infos
+	UPROPERTY()
+	TMap<const UClass*, FDataMap> DataClassMap;
 };
 
 /**
@@ -58,17 +60,6 @@ public:
 	void CollectCollectible(class ACollectible* Collectible);
 
 	/**
-	 * Get the collectible data for a give collectible
-	 * Needed for blueprint because templates can't be UFUNCTIONs
-	 *
-	 * @Param CollectibleData	The Data retrieved
-	 * @Param FPrimaryAssetId	The asset id for the collectible info
-	 * @Return Whether getting it was successful
-	 */
-	UFUNCTION(BlueprintCallable)
-	bool GetCollectibleData(FCollectibleData& CollectibleData, const FPrimaryAssetId AssetId);
-
-	/**
 	 * Find or add the data for a specific primary asset
 	 * @param AssetId	The Id of the primary asset associated with the data
 	 *
@@ -95,6 +86,36 @@ public:
 	template<class DataClass>
 	DataClass* AddDataForAsset(const FPrimaryAssetId& AssetId);
 
+	/**
+	 * Find or add the data for a specific primary asset
+	 * @param DataClass	The class of the data to retrieve
+	 * @param AssetId	The Id of the primary asset associated with the data
+	 *
+	 * Returns the data
+	 */
+	UFUNCTION(BlueprintCallable)
+	UBaseData* FindOrAddDataForAsset(const UClass* DataClass, const FPrimaryAssetId& AssetId);
+
+	/**
+	 * Find the data for a specific primary asset
+	 * @param DataClass	The class of the data to retrieve
+	 * @param AssetId	The Id of the primary asset associated with the data
+	 *
+	 * Returns the data if found
+	 */
+	UFUNCTION(BlueprintPure)
+	UBaseData* FindDataForAsset(const UClass* DataClass, const FPrimaryAssetId& AssetId);
+
+	/**
+	 * Add a data for a specific primary asset, checking to make sure it's unique
+	 * @param DataClass	The class of the data to retrieve
+	 * @param AssetId	The Id of the primary asset associated with the data
+	 *
+	 * Returns the data that was added
+	 */
+	UFUNCTION(BlueprintCallable)
+	UBaseData* AddDataForAsset(const UClass* DataClass, const FPrimaryAssetId& AssetId);
+
 	// Get the Collectible Collected delegate
 	FOnCollectibleCollected& OnCollectibleCollected() { return CollectibleCollectedDelegate; }
 
@@ -107,6 +128,15 @@ private:
 	 */
 	template<class DataClass>
 	DataClass* AddDataForAssetQuick(const FPrimaryAssetId& AssetId);
+
+	/**
+	 * Add a data for a specific primary asset, skips checking for uniqueness
+	 * @param DataClass	The class of the data to retrieve
+	 * @param AssetId	The Id of the primary asset associated with the data
+	 *
+	 * Returns the data that was added
+	 */
+	UBaseData* AddDataForAssetQuick(const UClass* DataClass, const FPrimaryAssetId& AssetId);
 
 	// Player save data
 	UPROPERTY(SaveGame)

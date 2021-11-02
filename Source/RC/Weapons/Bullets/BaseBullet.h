@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
-#include "RC/Util/RCTypes.h"
+#include "RC/Weapons/RCWeaponTypes.h"
 
 #include "BaseBullet.generated.h"
 

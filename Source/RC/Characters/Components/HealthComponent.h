@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 
-#include "RC/Util/RCTypes.h"
+#include "RC/Weapons/RCWeaponTypes.h"
 
 #include "HealthComponent.generated.h"
 

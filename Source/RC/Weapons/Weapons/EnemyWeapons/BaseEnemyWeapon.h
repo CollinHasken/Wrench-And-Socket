@@ -16,6 +16,6 @@ class RC_API ABaseEnemyWeapon : public ABaseWeapon
 	
 public:
 
-	// Shoot at the player
-	bool ShootAtPlayer();
+	// Attack the player
+	bool AttackPlayer();
 };

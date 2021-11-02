@@ -6,7 +6,7 @@
 
 #include "RC/AI/SplineFollowerComponent.h"
 #include "RC/Debug/Debug.h"
-#include "RC/Weapons/Weapons/BaseEnemyWeapon.h"
+#include "RC/Weapons/Weapons/EnemyWeapons/BaseEnemyWeapon.h"
 
 // Sets default values
 ABaseEnemy::ABaseEnemy()
@@ -31,12 +31,17 @@ void ABaseEnemy::EndPlay(const EEndPlayReason::Type)
 	Weapon->Destroy();
 }
 
+ABaseWeapon* ABaseEnemy::GetEquippedWeapon() const
+{
+	return Weapon;
+}
+
 // Attack the player
 void ABaseEnemy::AttackPlayer()
 {
 	LOG_RETURN(Weapon != nullptr, LogAI, Error, "Enemy %s doesn't have weapon", *GetName());
 	
-	Weapon->ShootAtPlayer();
+	Weapon->AttackPlayer();
 }
 
 // Called when the character dies

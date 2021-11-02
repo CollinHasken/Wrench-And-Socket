@@ -4,56 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h" 	
-#include "Containers/StaticArray.h"
 
 #include "RC/Framework/AssetDataInterface.h"
-#include "RC/Util/RCTypes.h"
 #include "RC/Util/TimeStamp.h"
+#include "RC/Util/RCTypes.h"
+#include "RC/Weapons/RCWeaponTypes.h"
 
 #include "BaseWeapon.generated.h"
 
-/**
- * Config for every weapon
- */
-UCLASS(BlueprintType)
-class RC_API UWeaponInfo : public UPrimaryDataAsset
-{
-	GENERATED_BODY()
-
-public:
-	// The class of the weapon this info is for
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Bullet)
-	TSubclassOf<class ABaseWeapon> WeaponClass;
-
-	// The bullet class to spawn when shot
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Bullet)
-	TSubclassOf<class ABaseBullet> BulletClass;
-
-	// The delay before each shot
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
-	float StartFiringDelay = 0.1f;
-
-	// The cooldown after each shot
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
-	float CooldownDelay = 0.5f;
-
-	// The base damage to deal
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
-	float BaseDamage = 1;
-
-	// The base max ammo for the weapon. Only used for player weapons
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
-	int BaseMaxAmmo = 150;
-
-	// The socket that we'll attach this weapon to
-	UPROPERTY(Category = Mesh, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FName SocketName = NAME_NONE;
-};
+// Broadcasted when the weapon attacks
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponAttack, class ABaseWeapon*, Weapon);
 
 /**
  * Basic weapon
  */
-UCLASS(Abstract, Blueprintable, config=Game)
+UCLASS(Abstract, Blueprintable)
 class RC_API ABaseWeapon : public AActor, public IAssetDataInterface
 {
 	GENERATED_BODY()
@@ -61,46 +26,30 @@ class RC_API ABaseWeapon : public AActor, public IAssetDataInterface
 public:	
 	ABaseWeapon();
 
-	// Get the info for this weapon
-	const UWeaponInfo* GetWeaponInfo() const { return WeaponInfo; }
-
 	/**
 	 * Set the new wielder for this weapon
 	 * @param NewWielder		The pawn that is now wielding this weapon
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void SetWielder(class ABaseCharacter* NewWielder);
 
-	/** 
-	 * Get the current wielder
+	/**
+	 * Attack if this weapon is able to
+	 * Returns true if an attack was performed
 	 */
-	UFUNCTION(BlueprintCallable)
-	class ABaseCharacter* GetWielder() { return Wielder; }
+	bool Attack();
 
-	// Returns whether the weapon can start shooting
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	bool CanStartShooting();
+	// Get the info for this weapon
+	UFUNCTION(BlueprintPure, Category = "Weapon|Info")
+	const UWeaponInfo* GetWeaponInfo() const { return WeaponInfo; }
 
-	// Returns whether the weapon can be shot now
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	virtual bool CanShoot();
+	/* IAssetDataInterface interface */
+	// Get the Primary Data Asset Id associated with this data actor's data.
+	UFUNCTION(BlueprintPure, Category = "Weapon|Info")
+	FPrimaryAssetId GetInfoId() const override { return WeaponInfo != nullptr ? WeaponInfo->GetPrimaryAssetId() : FPrimaryAssetId(); }
+	/* End of IAssetDataInterface interface */
 
-	// Shoot the weapon
-	UFUNCTION()
-	virtual bool Shoot();
-
-	/** Shoot the weapon at the specified target
-	 * @param TargetLocation	The location to shoot at
-	 */
-	virtual bool ShootAtTarget(const FVector& TargetLocation);
-
-	/** Shoot the weapon at the specified target
-	 * @param Target	The target character to shoot at
-	 */
-	virtual bool ShootAtTarget(class ABaseCharacter* Target);
-
-	// Get the current damage this weapon should deal
-	FORCEINLINE float GetDamage() { return CurrentDamage; }
+	FORCEINLINE class UWeaponComponent* GetWeaponComponent() const { return WeaponComponent; }
 
 	// Returns Mesh subobject
 	FORCEINLINE class USkeletalMeshComponent* GetMesh() const { return Mesh; }
@@ -108,38 +57,91 @@ public:
 	// Returns the Socket Name
 	FORCEINLINE const FName& GetSocketName() const { return WeaponInfo != nullptr ? WeaponInfo->SocketName : NAME_NONE; }
 
-	// Get the Primary Data Asset Id associated with this data actor's data.
-	UFUNCTION(BlueprintCallable)
-	FPrimaryAssetId GetInfoId() const override { return WeaponInfo != nullptr ? WeaponInfo->GetPrimaryAssetId() : FPrimaryAssetId(); }
-
+	// Get the Shot delegate
+	FOnWeaponAttack& OnShot() { return AttackDelegate; }
 protected:
-	// After properties have been loaded
-	virtual void PostInitProperties() override;
+	// Called when the game starts or when spawned
+	void BeginPlay() override;
 
-	// Called when the shot cooldown has expired
-	void CooldownExpired();
+	// Initialize the weapon component
+	virtual void InitWeaponComponent();
 
-	// The main skeletal mesh associated with this weapon.
-	UPROPERTY(Category = Mesh, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class USkeletalMeshComponent* Mesh = nullptr;
+	// Called when the weapon is being destroyed
+	void EndPlay(const EEndPlayReason::Type Reason) override;
 	
+	// Determine if the weapon can attack now
+	virtual bool CanAttack() const;
+
+	// Perform an attack with the weapon
+	virtual void PerformAttack();
+
+	/**
+	 * Called when the attack has ended
+	 *
+	 * @param bInterrupted	Whether the attack was interrupted
+	 */
+	virtual void AttackEnded(bool bInterrupted);
+
 	// The current weapon config
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
 	UWeaponInfo* WeaponInfo;
 
-	// Timer to keep track of when to fire while shoot is held down
-	FTimerHandle ShootTimer;
+	// The weapon component, created dynamically with the set class
+	UPROPERTY(Category = Weapon, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UWeaponComponent* WeaponComponent = nullptr;
 
-	// Timer to keep track of cooling down
-	FTimeStamp CooldownTimer;
-
-	// The socket where the bullet should spawn from
-	const class USkeletalMeshSocket* BulletOffsetSocket = nullptr;
+	// The main skeletal mesh associated with this weapon.
+	UPROPERTY(Category = Mesh, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USkeletalMeshComponent* Mesh = nullptr;
 
 	// The actor wielding this weapon
 	class ABaseCharacter* Wielder = nullptr;
 
-	// Current amount of damage each shot this weapon deals
-	float CurrentDamage = 0;
-};
+	// Timer to keep track of cooling down
+	FTimeStamp CooldownTimer;
 
+	// Whether the attack montage is playing on the wielder
+	bool bWielderAttackMontagePlaying = false;
+
+	// Whether the attack montage is playing on the weapon
+	bool bWeaponAttackMontagePlaying = false;
+
+private:
+	// Called when the anim notify attack is triggered
+	UFUNCTION(BlueprintCallable)
+	void OnAnimNotifyAttack();
+
+	// Called when the anim notify state attack begins
+	UFUNCTION(BlueprintCallable)
+	void OnAnimNotifyStateAttack_Begin();
+
+	// Called when the anim notify state attack ends
+	UFUNCTION(BlueprintCallable)
+	void OnAnimNotifyStateAttack_End();
+
+	/**
+	 * Called when the attack montage has ended on the wielder
+	 *
+	 * @param Montage		The montage that was stopped
+	 * @param bInterrupted	Whether the montage was interrupted
+	 */
+	void OnWielderAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	/**
+	 * Called when the attack montage has ended on the weapon
+	 *
+	 * @param Montage		The montage that was stopped
+	 * @param bInterrupted	Whether the montage was interrupted
+	 */
+	void OnWeaponAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	// Attack montage ended for the wielder delegate
+	FOnMontageEnded WielderAttackMontageEndedDelegate;
+
+	// Attack montage ended for the weapon delegate
+	FOnMontageEnded WeaponAttackMontageEndedDelegate;
+
+	// Broadcasted when the weapon fires
+	UPROPERTY(BlueprintAssignable, Category = Weapon, meta = (AllowPrivateAccess))
+	FOnWeaponAttack AttackDelegate;
+};

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
+#include "RC/Weapons/Weapons/PlayerWeapons/BasePlayerWeapon.h"
 
 #include "BurstPistol.generated.h"
 
@@ -16,6 +16,8 @@ class RC_API ABurstPistol : public ABasePlayerWeapon
 {
 	GENERATED_BODY()
 
+public:
+	ABurstPistol();
+
 protected:
-	float CooldownDelay = 0.2f;
 };

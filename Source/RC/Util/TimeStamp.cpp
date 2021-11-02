@@ -40,7 +40,7 @@ void FTimeStamp::Invalidate()
 }
 
 // Test if the timer has elapsed
-bool FTimeStamp::Elapsed()
+bool FTimeStamp::Elapsed() const
 {
 	if (!IsValid())
 	{
@@ -58,7 +58,7 @@ bool FTimeStamp::Elapsed()
 }
 
 // Get the time since the timer started
-float FTimeStamp::GetTimeSince()
+float FTimeStamp::GetTimeSince() const
 {
 	if (TimeStampSubsystem == nullptr)
 	{
@@ -71,13 +71,13 @@ float FTimeStamp::GetTimeSince()
 }
 
 // Is the time stamp valid
-bool FTimeStamp::IsValid()
+bool FTimeStamp::IsValid() const
 {
 	return Time != -1;
 }
 
 // Is the timer valid and waiting to elapse
-bool FTimeStamp::IsActive()
+bool FTimeStamp::IsActive() const
 {
 	return IsValid() && !Elapsed();
 }

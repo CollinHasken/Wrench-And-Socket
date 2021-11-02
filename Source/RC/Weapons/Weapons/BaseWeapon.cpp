@@ -2,16 +2,16 @@
 
 #include "BaseWeapon.h"
 
-#include "Components/CapsuleComponent.h"
+#include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 
-#include "RC/Weapons/Bullets/BaseBullet.h"
 #include "RC/Characters/BaseCharacter.h"
 #include "RC/Characters/Player/RCCharacter.h"
 #include "RC/Characters/Player/RCPlayerState.h"
 #include "RC/Debug/Debug.h"
-#include "RC/Util/RCTypes.h"
+#include "RC/Weapons/RCWeaponTypes.h"
+#include "RC/Weapons/Weapons/Components/WeaponComponent.h"
 
 ABaseWeapon::ABaseWeapon()
 {
@@ -21,28 +21,65 @@ ABaseWeapon::ABaseWeapon()
 
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
+
+	WielderAttackMontageEndedDelegate.BindUObject(this, &ABaseWeapon::OnWielderAttackMontageEnded);
+	WeaponAttackMontageEndedDelegate.BindUObject(this, &ABaseWeapon::OnWeaponAttackMontageEnded);
 }
 
-// After properties have been loaded
-void ABaseWeapon::PostInitProperties()
+// Called when the game starts or when spawned
+void ABaseWeapon::BeginPlay()
 {
-	Super::PostInitProperties();
+	Super::BeginPlay();
 
-	// Save off socket
-	if (Mesh != nullptr) 
+	// Search for a blueprint added weapon component
+	if (WeaponComponent == nullptr)
 	{
-		const FName& SocketName = GetSocketName();
-		if (!SocketName.IsNone())
+		TInlineComponentArray<UWeaponComponent*> WeaponComponents(this);
+		if (WeaponComponents.Num() != 1)
 		{
-			BulletOffsetSocket = Mesh->GetSocketByName(SocketName);
+			ASSERT(WeaponComponents.Num() != 0, "No weapon component found on weapon %s", *GetName());
+			ASSERT(WeaponComponents.Num() <= 1, "More than one weapon component found on weapon %s. Only one is supported", *GetName());
+			return;
 		}
-	} 
-	else 
-	{
-		ASSERT(Mesh != nullptr, "Mesh wasn't created?")
+		WeaponComponent = WeaponComponents[0];
 	}
+	ASSERT_RETURN(WeaponComponent != nullptr, "Weapon %s doesn't have a code or blueprint added weapon component", *GetName());
 
-	CurrentDamage = WeaponInfo != nullptr ? WeaponInfo->BaseDamage : 0;
+	InitWeaponComponent();
+}
+
+// Initialize the weapon component
+void ABaseWeapon::InitWeaponComponent()
+{
+	// Setup the damage
+	ASSERT(WeaponInfo != nullptr);
+	if (WeaponInfo != nullptr)
+	{
+		WeaponComponent->Init(*WeaponInfo);
+	}
+}
+
+// Called when the weapon is being destroyed
+void ABaseWeapon::EndPlay(const EEndPlayReason::Type Reason)
+{
+	if (Reason == EEndPlayReason::Destroyed)
+	{
+		// Stop the attack montage if it's playing
+		if (bWielderAttackMontagePlaying)
+		{
+			if (WeaponInfo != nullptr)
+			{
+				if (Wielder != nullptr)
+				{
+					UAnimInstance* WielderAnimInstance = Wielder->GetAnimInstance();
+					if (WielderAnimInstance != nullptr)
+					{
+						WielderAnimInstance->Montage_Stop(0.2f, WeaponInfo->WeaponAttackMontage);
+					}
+				}
+			}
+		}
+	}
 }
 
 // Set the new wielder
@@ -50,10 +87,12 @@ void ABaseWeapon::SetWielder(ABaseCharacter* NewWielder)
 {
 	Wielder = NewWielder;
 
+	WeaponComponent->SetWielder(Wielder);
+
 	// Attach weapon to socket
 	if (!GetSocketName().IsNone())
 	{
-		USkeletalMeshComponent* WielderMesh = Wielder->FindComponentByClass<USkeletalMeshComponent>();
+		USkeletalMeshComponent* WielderMesh = NewWielder->FindComponentByClass<USkeletalMeshComponent>();
 		if (WielderMesh)
 		{
 			FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules::SnapToTargetNotIncludingScale;
@@ -64,29 +103,17 @@ void ABaseWeapon::SetWielder(ABaseCharacter* NewWielder)
 	}
 }
 
-// Returns whether the weapon can start shooting
-bool ABaseWeapon::CanStartShooting()
+// Determine if the weapon can attack now
+bool ABaseWeapon::CanAttack() const
 {
-	FTimerManager& TimerManager = GetWorldTimerManager();
-	// Still coolingdown
-	if (CooldownTimer.IsActive())
+	ASSERT_RETURN_VALUE(WeaponComponent != nullptr, false);
+
+	// Attack playing
+	if (bWielderAttackMontagePlaying || bWeaponAttackMontagePlaying)
 	{
 		return false;
 	}
 
-	// Already have a shot queueing up
-	if (TimerManager.IsTimerActive(ShootTimer))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-// Returns whether the weapon can be shot now
-bool ABaseWeapon::CanShoot()
-{
-	FTimerManager& TimerManager = GetWorldTimerManager();
 	// Still coolingdown
 	if (CooldownTimer.IsActive())
 	{
@@ -96,68 +123,117 @@ bool ABaseWeapon::CanShoot()
 	return true;
 }
 
-// Shoot the weapon
-bool ABaseWeapon::Shoot()
-{	
-	ASSERT_RETURN_VALUE(WeaponInfo != nullptr, false);
-	CooldownTimer.Set(WeaponInfo->CooldownDelay);
+// Attack if this weapon is able to
+bool ABaseWeapon::Attack()
+{
+	if (!CanAttack())
+	{
+		return false;
+	}
+
+	PerformAttack();
+
+	AttackDelegate.Broadcast(this);
+
 	return true;
 }
 
-// Shoot the weapon at the specified target
-bool ABaseWeapon::ShootAtTarget(const FVector& TargetLocation)
+// Perform an attack with the weapon
+void ABaseWeapon::PerformAttack()
 {
-	ASSERT_RETURN_VALUE(WeaponInfo != nullptr, false);
+	// Play the given montage and set the delegate
+	auto PlayMontage = [&](bool* PlayingBool, FOnMontageEnded& MontageEndedDelegate, UAnimInstance& AnimInstance, UAnimMontage& Montage)
+	{
+		// Play montage and listen for end
+		if (AnimInstance.Montage_Play(&Montage) == 0)
+		{
+			// Wasn't played succesfully
+			LOG_CHECK(false, LogWeapon, Error, "Unable to play montage %f for weapon %f", *Montage.GetName(), *GetName());
+		}
+		AnimInstance.Montage_SetEndDelegate(MontageEndedDelegate, &Montage);
+		*PlayingBool = true;		
+	};
 
-	UWorld* World = GetWorld();
-	ASSERT_RETURN_VALUE(World != nullptr, false);
+	// If there's an attack montage to play for the wielder
+	if (WeaponInfo->WielderAttackMontage != nullptr)
+	{
+		LOG_RETURN(Wielder != nullptr, LogWeapon, Error, "Unable to play montage %f for weapon %f. Wielder not found.", *WeaponInfo->WielderAttackMontage->GetName(), *GetName());
 
-	// Spawn the bullet at the offset
-	const FTransform& BulletTransform = BulletOffsetSocket->GetSocketTransform(Mesh);
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-	SpawnParams.Instigator = Wielder;
-	SpawnParams.bNoFail = true;
-	ABaseBullet* Bullet = World->SpawnActor<ABaseBullet>(WeaponInfo->BulletClass, BulletTransform, SpawnParams);
-	ASSERT_RETURN_VALUE(Bullet != nullptr, false);
+		UAnimInstance* WielderAnimInstance = Wielder->GetAnimInstance();
+		LOG_RETURN(WielderAnimInstance != nullptr, LogWeapon, Error, "Unable to play montage %f for weapon %f.\nWielder %f anim instance not found.", *WeaponInfo->WielderAttackMontage->GetName(), *GetName(), *Wielder->GetName());
 
-	FVector Trajectory = TargetLocation - BulletTransform.GetLocation();
-	Trajectory.Normalize();
+		PlayMontage(&bWielderAttackMontagePlaying, WielderAttackMontageEndedDelegate, *WielderAnimInstance, *WeaponInfo->WielderAttackMontage);
+	}
 
-	// Initialize bullet to send it off
-	FBulletData BulletData;
-	BulletData.Damage = GetDamage();
-	BulletData.Direction = Trajectory;
-	BulletData.Shooter = GetWielder();
-	BulletData.Weapon = this;
+	// If there's an attack montage to play for the weapon
+	if (WeaponInfo->WeaponAttackMontage != nullptr)
+	{
+		ASSERT_RETURN(GetMesh() != nullptr);
 
-	Bullet->Init(BulletData);
-	return true;
+		UAnimInstance* WeaponAnimInstance = GetMesh()->GetAnimInstance();
+		LOG_RETURN(WeaponAnimInstance != nullptr, LogWeapon, Error, "Unable to play montage %f for weapon %f.\nWeapon %f anim instance not found.", *WeaponInfo->WeaponAttackMontage->GetName(), *GetName(), *GetName());
+
+		PlayMontage(&bWeaponAttackMontagePlaying, WeaponAttackMontageEndedDelegate, *WeaponAnimInstance, *WeaponInfo->WeaponAttackMontage);
+	}
+
+	// If we don't attack from the montage, then attack
+	if (!WeaponInfo->AttackFromMontage)
+	{
+		WeaponComponent->Attack();
+	}
+
+	if (!bWielderAttackMontagePlaying && !bWeaponAttackMontagePlaying)
+	{
+		// If we don't have a montage, then it's an instant attack
+		AttackEnded(false);
+	}
 }
 
-// Shoot the weapon at the specified target
-bool ABaseWeapon::ShootAtTarget(ABaseCharacter* Target)
+// Called when the anim notify attack is triggered
+void ABaseWeapon::OnAnimNotifyAttack()
 {
-	// Get the middle of the target's bounding box
-	// Maybe change it to looking for a plug in the future
-	ASSERT_RETURN_VALUE(Target != nullptr, false);
-
-	UCapsuleComponent* TargetCapsule = Target->GetCapsuleComponent();
-	FVector TargetLocation;
-	if (TargetCapsule != nullptr)
-	{
-		TargetLocation = TargetCapsule->GetComponentLocation();
-	}
-	else
-	{
-		UE_LOG(LogAI, Error, TEXT("Target %s doesn't have capsule component"), *GetName());
-		FBox Bounds = Target->GetComponentsBoundingBox(false, true);
-		TargetLocation = Bounds.GetCenter();
-	}
-	return ShootAtTarget(TargetLocation);
+	ASSERT_RETURN(WeaponComponent != nullptr);
+	WeaponComponent->OnAnimNotifyAttack();
 }
 
-// Called when the shot cooldown has expired
-void ABaseWeapon::CooldownExpired()
+// Called when the anim notify state attack begins
+void ABaseWeapon::OnAnimNotifyStateAttack_Begin()
 {
+	ASSERT_RETURN(WeaponComponent != nullptr);
+	WeaponComponent->OnAnimNotifyStateAttack_Begin();
+}
+
+// Called when the anim notify state attack ends
+void ABaseWeapon::OnAnimNotifyStateAttack_End()
+{
+	ASSERT_RETURN(WeaponComponent != nullptr);
+	WeaponComponent->OnAnimNotifyStateAttack_End();
+}
+
+// Called when the attack montage has ended
+void ABaseWeapon::OnWielderAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	bWielderAttackMontagePlaying = false;
+	if (!bWeaponAttackMontagePlaying)
+	{
+		AttackEnded(bInterrupted);
+	}
+}
+
+// Called when the attack montage has ended
+void ABaseWeapon::OnWeaponAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	bWeaponAttackMontagePlaying = false;
+	if (!bWielderAttackMontagePlaying)
+	{
+		AttackEnded(bInterrupted);
+	}
+}
+
+// Called when the attack has ended
+void ABaseWeapon::AttackEnded(bool bInterrupted)
+{
+	bWielderAttackMontagePlaying = false;
+	bWeaponAttackMontagePlaying = false;
+	CooldownTimer.Set(WeaponInfo->Cooldown);
 }

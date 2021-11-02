@@ -36,9 +36,15 @@ public:
 	 */
 	virtual void OnDamageGiven(const FDamageReceivedParams& Params) {};
 
+	// Get the currently equipped weapon
+	UFUNCTION(BlueprintPure)
+	virtual class ABaseWeapon* GetEquippedWeapon() const { return nullptr; }
 
-	/** Returns Health subobject **/
+	// Returns Health subobject
 	FORCEINLINE class UHealthComponent* GetHealth() const { return Health; }
+
+	// Returns the anim instance
+	FORCEINLINE class UAnimInstance* GetAnimInstance() const { return GetMesh() != nullptr ? GetMesh()->GetAnimInstance() : nullptr; }
 
 protected:
 	/**

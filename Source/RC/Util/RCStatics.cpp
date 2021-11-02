@@ -4,14 +4,22 @@
 
 #include "Engine/AssetManager.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/GameStateBase.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "RC/Characters/BaseCharacter.h"
+#include "RC/Characters/Player/RCPlayerState.h"
+
+#include "RC/Debug/Debug.h"
+
+const float URCStatics::TriggerStatusHalfMin = 0.3f;
+const float URCStatics::TriggerStatusFullMin = 0.75f;
 
 const FName URCStatics::BlockAllButPlayer_ProfileName = FName(TEXT("BlockAllButPlayer"));
 const FName URCStatics::Collectible_ProfileName = FName(TEXT("Collectible"));
 const FName URCStatics::CollectiblePre_ProfileName = FName(TEXT("CollectiblePre"));
 const FName URCStatics::CollectibleTrigger_ProfileName = FName(TEXT("CollectibleTrigger"));
+const FName URCStatics::OverlapOnlyActor_ProfileName = FName(TEXT("OverlapOnlyActor"));
 
 // Is the actor the player
 bool URCStatics::IsActorPlayer(const AActor* Actor)
@@ -29,6 +37,17 @@ const UObject* URCStatics::GetPrimaryAssetObject(const FPrimaryAssetId& AssetId)
 {
 	UAssetManager* Manager = UAssetManager::GetIfValid();	
 	return Manager != nullptr ? Manager->GetPrimaryAssetObject(AssetId) : nullptr;
+}
+
+ARCPlayerState* URCStatics::GetPlayerState(const UObject* WorldContextObject)
+{
+	AGameStateBase* GameState = UGameplayStatics::GetGameState(WorldContextObject);
+	if (GameState == nullptr)
+	{
+		return nullptr;
+	}
+	ASSERT_RETURN_VALUE(GameState->PlayerArray.Num() == 1, false);
+	return Cast<ARCPlayerState>(GameState->PlayerArray[0]);
 }
 
 TSharedPtr<FStreamableHandle> URCStatics::LoadPrimaryAsset(const FPrimaryAssetId& AssetId, FStreamableDelegate DelegateToCall)

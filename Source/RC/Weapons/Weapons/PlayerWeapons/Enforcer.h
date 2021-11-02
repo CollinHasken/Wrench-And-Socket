@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
+#include "RC/Weapons/Weapons/PlayerWeapons/BasePlayerWeapon.h"
 #include "Enforcer.generated.h"
 
 /**
@@ -14,5 +14,6 @@ class RC_API AEnforcer : public ABasePlayerWeapon
 {
 	GENERATED_BODY()
 
-	virtual bool Shoot() override;
+public:
+	AEnforcer();
 };

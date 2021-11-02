@@ -19,7 +19,7 @@
 #include "RC/Collectibles/Collectible.h"
 #include "RC/Util/DataSingleton.h"
 #include "RC/Util/RCStatics.h"
-#include "RC/Weapons/Weapons/BasePlayerWeapon.h"
+#include "RC/Weapons/Weapons/PlayerWeapons/BasePlayerWeapon.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ARCCharacter
@@ -175,10 +175,16 @@ void ARCCharacter::OnDamageGiven(const FDamageReceivedParams& Params)
 	ARCPlayerState* State = GetPlayerState<ARCPlayerState>();
 	ASSERT_RETURN(State != nullptr);
 
-	FWeaponData* WeaponData = State->FindOrAddDataForAsset<FWeaponData>(Params.CauseId);
-	ASSERT_RETURN(WeaponData != nullptr, "Weapon Data not able to be added");
+	UPlayerWeaponData* PlayerWeaponData = State->FindOrAddDataForAsset<UPlayerWeaponData>(Params.CauseId);
+	ASSERT_RETURN(PlayerWeaponData != nullptr, "Weapon Data not able to be added");
 
-	WeaponData->GrantDamageXP(Params.DamageDealt);
+	PlayerWeaponData->GrantDamageXP(Params.DamageDealt);
+}
+
+// Get the currently equipped weapon
+ABaseWeapon* ARCCharacter::GetEquippedWeapon() const
+{
+	return Inventory != nullptr ? Inventory->GetEquippedWeapon() : nullptr;
 }
 
 // Setup the player inputs
@@ -201,9 +207,14 @@ void ARCCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ARCCharacter::LookUpAtRate);
 
 	// Weapon inputs
-	PlayerInputComponent->BindAxis("Shoot", this, &ARCCharacter::Shoot);	
-	PlayerInputComponent->BindAction("NextWeapon", IE_Released, this, &ARCCharacter::EquipNextWeapon);
-	PlayerInputComponent->BindAction("PreviousWeapon", IE_Released, this, &ARCCharacter::EquipPreviousWeapon);
+	PlayerInputComponent->BindAction("Wrench", IE_Pressed, this, &ARCCharacter::WrenchAttack);
+	PlayerInputComponent->BindAction("FullAttack", IE_Pressed, this, &ARCCharacter::FullAttack);
+	PlayerInputComponent->BindAction("FullAttack", IE_Released, this, &ARCCharacter::StopAttack);
+	PlayerInputComponent->BindAction("HalfAttack", IE_Pressed, this, &ARCCharacter::HalfAttack);
+	PlayerInputComponent->BindAction("HalfAttack", IE_Released, this, &ARCCharacter::StopAttack);
+	PlayerInputComponent->BindAxis("Attack", this, &ARCCharacter::Attack);	
+	PlayerInputComponent->BindAction("NextWeapon", IE_Pressed, this, &ARCCharacter::EquipNextWeapon);
+	PlayerInputComponent->BindAction("PreviousWeapon", IE_Pressed, this, &ARCCharacter::EquipPreviousWeapon);
 
 	// UI
 	PlayerInputComponent->BindAction("SelectWeapon", IE_Pressed, this, &ARCCharacter::SelectWeapon);
@@ -257,17 +268,81 @@ void ARCCharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-// Called via input to update shooting the current weapon
-void ARCCharacter::Shoot(float Value)
-{	
+// Called via input to attack with the wrench
+void ARCCharacter::WrenchAttack()
+{
 	ASSERT_RETURN(Inventory != nullptr);
 
-	ABasePlayerWeapon* EquippedWeapon = Inventory->GetEquippedWeapon();
-	if (EquippedWeapon == nullptr) {
+	// Equip the wrench if it's not
+	ABasePlayerWeapon* EquippedWeapon = nullptr;
+	if (Inventory->GetEquippedWeaponSlot() != EInventorySlot::SlotWrench)
+	{
+		EquippedWeapon = Inventory->EquipSlot(EInventorySlot::SlotWrench);
+	}
+	else
+	{
+		EquippedWeapon = Inventory->GetEquippedWeapon();
+	}
+
+	if (EquippedWeapon == nullptr)
+	{
 		return;
 	}
 
-	EquippedWeapon->UpdateTriggerStatus(ABasePlayerWeapon::TriggerValueToStatus(Value));
+	EquippedWeapon->UpdateTriggerStatus(ETriggerStatus::FULL);
+}
+
+// Called via input to attack with full trigger
+void ARCCharacter::FullAttack()
+{
+	// Set the override for the Attack function to use
+	TriggerOverride = ETriggerStatus::FULL;
+}
+
+// Called via input to attack with half trigger
+void ARCCharacter::HalfAttack()
+{
+	// Set the override for the Attack function to use
+	TriggerOverride = ETriggerStatus::HALF;
+}
+
+// Called via input to stop attacking
+void ARCCharacter::StopAttack()
+{
+	// Set the override for the Attack function to use
+	TriggerOverride = ETriggerStatus::NONE;
+}
+
+// Called via input to update attacking with the current weapon
+void ARCCharacter::Attack(float Value)
+{	
+	ASSERT_RETURN(Inventory != nullptr);
+
+	ETriggerStatus TriggerStatus = TriggerOverride != ETriggerStatus::NONE ? TriggerOverride : URCStatics::TriggerValueToStatus(Value);
+
+	// If we had the wrench equipped
+	ABasePlayerWeapon* EquippedWeapon = nullptr;
+	if (Inventory->GetEquippedWeaponSlot() == EInventorySlot::SlotWrench)
+	{
+		// If we aren't triggering then do nothing
+		if (TriggerStatus == ETriggerStatus::NONE)
+		{
+			return;
+		}
+		// Switch back to the last weapon
+		EquippedWeapon = Inventory->EquipPreviousWeapon();
+	}
+	else
+	{
+		EquippedWeapon = Inventory->GetEquippedWeapon();
+	}
+
+	if (EquippedWeapon == nullptr) 
+	{
+		return;
+	}
+
+	EquippedWeapon->UpdateTriggerStatus(TriggerStatus);
 }
 
 // Called via input to equip the next weapon in our inventory
@@ -309,7 +384,7 @@ void ARCCharacter::OpenPauseSettings()
 {}
 
 // Called when a weapon is equipped
-void ARCCharacter::OnWeaponEquipped(ABasePlayerWeapon* Weapon)
+void ARCCharacter::OnWeaponEquipped(ABasePlayerWeapon* Weapon, EInventorySlot Slot)
 {
 	if (Weapon != nullptr)
 	{

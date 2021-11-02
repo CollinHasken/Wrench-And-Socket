@@ -24,8 +24,8 @@ public:
 	// Returns Spline Follower subobject
 	FORCEINLINE class USplineFollowerComponent* GetSplineFollower() const { return SplineFollower; }
 
-	// Returns Weapn subobject
-	FORCEINLINE class ABaseEnemyWeapon* GetWeapon() const { return Weapon; }
+	// Get the currently equipped weapon
+	class ABaseWeapon* GetEquippedWeapon() const override;
 
 protected:
 	// Called when the game starts or when spawned

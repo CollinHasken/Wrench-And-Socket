@@ -65,7 +65,7 @@ public:
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return Mesh; }
 
 	// Get the Primary Data Asset Id associated with this data actor's data.
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintPure)
 	FPrimaryAssetId GetInfoId() const override { return CollectibleInfo != nullptr ? CollectibleInfo->GetPrimaryAssetId() : FPrimaryAssetId(); }
 
 protected:
@@ -165,7 +165,7 @@ private:
 	UCollectibleInfo* CollectibleInfo = nullptr;
 
 	// The collectible data
-	struct FCollectibleData* CollectibleData = nullptr;
+	class UCollectibleData* CollectibleData = nullptr;
 
 	// Start location for the collection
 	FVector CollectStartLocation = FVector::ZeroVector;
