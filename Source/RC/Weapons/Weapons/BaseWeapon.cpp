@@ -62,6 +62,8 @@ void ABaseWeapon::InitWeaponComponent()
 // Called when the weapon is being destroyed
 void ABaseWeapon::EndPlay(const EEndPlayReason::Type Reason)
 {
+	Super::EndPlay(Reason);
+
 	if (Reason == EEndPlayReason::Destroyed)
 	{
 		// Stop the attack montage if it's playing

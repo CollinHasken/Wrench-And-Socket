@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/InputSettings.h"
 
+#include "RC/Characters/Components/MaskableInputComponent.h"
 #include "RC/Characters/Player/RCCharacter.h"
 #include "RC/Characters/Components/InventoryComponent.h"
 #include "RC/Debug/Debug.h"
@@ -25,6 +26,12 @@ void ARCPlayerController::BeginPlay()
 		UIInputComponent->bBlockInput = bBlockInput;
 		UInputDelegateBinding::BindInputDelegates(GetClass(), UIInputComponent);
 	}
+
+	// Create Maskable Input
+	MaskableInput = NewObject<UMaskableInputComponent>(this, UMaskableInputComponent::StaticClass(), TEXT("Maskable Input"));
+	MaskableInput->Priority = 9999;
+	MaskableInput->RegisterComponent();
+	PushInputComponent(MaskableInput);
 }
 
 // Called each frame

@@ -17,12 +17,15 @@ class RC_API AWrench : public ABasePlayerWeapon
 public:
 	AWrench();
 
-	// Returns Inventory subobject
+	// Returns trigger subobject
 	FORCEINLINE class UCapsuleComponent* GetHitTrigger() const { return HitTrigger; }
 
 protected:
 	// Initialize the weapon component
 	void InitWeaponComponent() override;
+
+	// Called when the weapon is being destroyed
+	void EndPlay(const EEndPlayReason::Type Reason) override;
 
 	// Perform an attack with the weapon
 	void PerformAttack() override;
@@ -35,7 +38,12 @@ protected:
 	void AttackEnded(bool bInterrupted) override;
 
 private:
-	// Inventory
+	// Trigger for attack
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	class UCapsuleComponent* HitTrigger;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	class UInputMaskInfo* MeleeMask;
+
+	bool bMaskApplied = false;
 };

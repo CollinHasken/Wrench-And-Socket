@@ -4,7 +4,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-#include "RC/Characters/BaseCharacter.h"
+#include "RC/Characters/Player/RCCharacter.h"
+#include "RC/Characters/Player/RCPlayerController.h"
+#include "RC/Characters/Components/MaskableInputComponent.h"
 #include "RC/Weapons/Weapons/Components/WeaponMeleeComponent.h"
 #include "RC/Util/RCStatics.h"
 #include "RC/Debug/Debug.h"
@@ -32,13 +34,51 @@ void AWrench::InitWeaponComponent()
 	WeaponMeleeComponent->Init(*WeaponInfo, *HitTrigger);
 }
 
+// Called when the weapon is being destroyed
+void AWrench::EndPlay(const EEndPlayReason::Type Reason)
+{
+	Super::EndPlay(Reason);
+
+	if (bMaskApplied)
+	{
+		bMaskApplied = false;
+		ARCCharacter* Player = Cast<ARCCharacter>(Wielder);
+		if (Player != nullptr)
+		{
+			ARCPlayerController* PlayerController = Player->GetController<ARCPlayerController>();
+			if (PlayerController != nullptr)
+			{
+				UMaskableInputComponent* MaskableInput = PlayerController->GetMaskableInput();
+				if (MaskableInput != nullptr)
+				{
+					MaskableInput->PopMask(MeleeMask, "Wrench::Attack");
+				}
+			}
+		}
+	}
+}
+
 // Perform an attack with the weapon
 void AWrench::PerformAttack()
 {
 	Super::PerformAttack();
 
 	// Prevent movement
-	Wielder->DisableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	if (MeleeMask != nullptr)
+	{
+		ARCCharacter* Player = Cast<ARCCharacter>(Wielder);
+		ASSERT_RETURN(Player != nullptr);
+
+		ARCPlayerController* PlayerController = Player->GetController<ARCPlayerController>();
+		ASSERT_RETURN(PlayerController != nullptr);
+
+		UMaskableInputComponent* MaskableInput = PlayerController->GetMaskableInput();
+		if (MaskableInput != nullptr)
+		{
+			MaskableInput->PushMask(MeleeMask, "Wrench::Attack");
+			bMaskApplied = true;
+		}
+	}
 }
 
 // Called when the attack has ended
@@ -47,5 +87,19 @@ void AWrench::AttackEnded(bool bInterrupted)
 	Super::AttackEnded(bInterrupted);
 
 	// Re-enable movement
-	Wielder->EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	if (MeleeMask != nullptr)
+	{
+		ARCCharacter* Player = Cast<ARCCharacter>(Wielder);
+		ASSERT_RETURN(Player != nullptr);
+
+		ARCPlayerController* PlayerController = Player->GetController<ARCPlayerController>();
+		ASSERT_RETURN(PlayerController != nullptr);
+
+		UMaskableInputComponent* MaskableInput = PlayerController->GetMaskableInput();
+		if (MaskableInput != nullptr)
+		{
+			MaskableInput->PopMask(MeleeMask, "Wrench::Attack");
+			bMaskApplied = false;
+		}
+	}
 }

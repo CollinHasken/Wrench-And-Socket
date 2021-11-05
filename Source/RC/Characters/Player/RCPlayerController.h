@@ -31,6 +31,9 @@ public:
 	 */
 	void OpenWeaponSelect(bool Open = true);
 
+	UFUNCTION(BlueprintPure)
+	class UMaskableInputComponent* GetMaskableInput() const { return MaskableInput; }
+
 protected:
 	// Called when the game starts or when spawned
 	void BeginPlay() override;
@@ -63,7 +66,12 @@ protected:
 	void SetWeaponSelectY(float Value);	
 
 	// Component that handles input for the UI
+	UPROPERTY(DuplicateTransient)
 	class UInputComponent* UIInputComponent;
+
+	// Maskable Input
+	UPROPERTY(DuplicateTransient)
+	class UMaskableInputComponent* MaskableInput;
 
 	// Get the Slot Selected delegate
 	FOnSlotSelected& OnSlotSelected() { return SlotSelectedDelegate; }

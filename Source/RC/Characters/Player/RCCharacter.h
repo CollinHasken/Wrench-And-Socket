@@ -54,14 +54,14 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 	// APawn interface
 	/**
 	 * Setup the player inputs
 	 * @param PlayerInputComponent	The input component to bind to
 	 */
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
 
 	// Called via input for forwards/backward input
