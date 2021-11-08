@@ -10,7 +10,7 @@
 #include "RCPlayerState.generated.h"
 
 // Broadcasted when a collectible has been collected
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCollectibleCollected, FPrimaryAssetId, CollectibleInfoId, int, CurrentAmount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCollectibleCollected, FPrimaryAssetId, CollectibleInfoId, int, AmountAdded, int, CurrentAmount);
 
 /**
  * Player state data that will be saved

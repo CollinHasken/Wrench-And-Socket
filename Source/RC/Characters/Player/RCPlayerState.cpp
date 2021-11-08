@@ -118,7 +118,7 @@ void ARCPlayerState::CollectCollectible(ACollectible* Collectible)
 {
 	// Let the collectible actor know they've been collected
 	ASSERT_RETURN(Collectible != nullptr);
-	Collectible->OnCollected();
+	int AmountCollected = Collectible->Collect();
 
 	// Let the collectible data know it's been collected
 	FPrimaryAssetId CollectibleInfoId = Collectible->GetInfoId();
@@ -126,7 +126,7 @@ void ARCPlayerState::CollectCollectible(ACollectible* Collectible)
 	ASSERT_RETURN(CollectibleData != nullptr, "Weapon Data not able to be added");
 
 	// Let others know it's been collected
-	CollectibleCollectedDelegate.Broadcast(CollectibleInfoId, CollectibleData->CurrentAmount);
+	CollectibleCollectedDelegate.Broadcast(CollectibleInfoId, AmountCollected, CollectibleData->CurrentAmount);
 }
 
 // Find the data for a specific primary asset

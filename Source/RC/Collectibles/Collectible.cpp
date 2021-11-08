@@ -133,15 +133,32 @@ void ACollectible::StartCollecting(class AActor* Target)
 }
 
 // Called when this collectible has been collected
-void ACollectible::OnCollected()
+int ACollectible::Collect()
 {
+	// If we aren't traveling yet, then it was collected during the initial delay
+	if (!bIsTraveling)
+	{
+		ARCPlayerState* PlayerState = URCStatics::GetPlayerState(GetWorld());
+		if (PlayerState == nullptr)
+		{
+			ASSERT(PlayerState != nullptr, "Player doesn't have player state");
+		}
+		else
+		{
+			CollectibleData = PlayerState->FindOrAddDataForAsset<UCollectibleData>(CollectibleInfo->GetPrimaryAssetId());
+			ASSERT(CollectibleData != nullptr, "Weapon Data not able to be added");		
+		}
+	}
+
+	int CollectionAmount = 0;
 	if (CollectibleData != nullptr)
 	{
-		int CollectionAmount = GetCollectionAmount();
+		CollectionAmount = GetCollectionAmount();
 		CollectibleData->GrantCollectible(CollectionAmount);
 	}
 
 	Destroy();
+	return CollectionAmount;
 }
 
 // Find the location along the quadratic given the percentage along the arc

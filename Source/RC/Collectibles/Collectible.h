@@ -58,8 +58,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StartCollecting(class AActor* Target);
 
-	// Called when this collectible has been collected
-	virtual void OnCollected();
+	/*
+	 * Called to collect this collectible
+	 * @Return The amount collected
+	 */
+	virtual int Collect();
 
 	// Returns Mesh subobject
 	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return Mesh; }
