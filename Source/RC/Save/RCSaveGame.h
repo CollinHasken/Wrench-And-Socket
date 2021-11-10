@@ -17,14 +17,9 @@ struct FActorSaveData
 	GENERATED_BODY()
 
 public:
-
 	// Identifier for which Actor this belongs to
 	UPROPERTY()
-	FName ActorName;
-
-	// For movable Actors, keep location,rotation,scale
-	UPROPERTY()
-	FTransform Transform;
+	FSoftObjectPath ActorPath;
 
 	// Contains all SaveGame marked variables of the Actor
 	UPROPERTY()
@@ -69,7 +64,7 @@ public:
  * Mostly just the player's data
  */
 UCLASS()
-class RC_API URCLevelTransitionSave : public USaveGame
+class RC_API URCLevelTransitionSave : public URCSaveGame
 {
 	GENERATED_BODY()
 

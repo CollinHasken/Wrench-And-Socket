@@ -3,9 +3,35 @@
 
 #include "RC/Debug/Debug.h"
 
+// Save the destructible
+FArchive& operator<<(FArchive& Ar, UDestructibleComponent& SObj)
+{
+	if (Ar.IsSaveGame())
+	{
+		Ar << SObj.bIsDestroyed;
+	}
+	return Ar;
+}
+
+void UDestructibleComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (IsDestroyed())
+	{
+		HideOwner();
+	}
+}
+
 // Apply hit to destructible	 
 void UDestructibleComponent::ApplyHit()
 {
+	// Already destroyed
+	if (IsDestroyed())
+	{
+		return;
+	}
+
 	++CurrentHits;
 	if (CurrentHits >= HitsToDestruction)
 	{
@@ -18,6 +44,8 @@ void UDestructibleComponent::Destroy()
 {
 	AActor* Owner = GetOwner();
 	ASSERT_RETURN(Owner != nullptr);
+
+	bIsDestroyed = true;
 
 	// Spawn husk
 	if (HuskClass != NULL)	{
@@ -32,6 +60,15 @@ void UDestructibleComponent::Destroy()
 		World->SpawnActor<AActor>(HuskClass, SpawnTransform, SpawnParams);
 	}
 
-	// Destroy ourselves
-	Owner->Destroy();
+	HideOwner();
+}
+
+void UDestructibleComponent::HideOwner()
+{
+	AActor* Owner = GetOwner();
+	ASSERT_RETURN(Owner != nullptr);
+
+	// Hide ourselves
+	Owner->SetActorHiddenInGame(true);
+	Owner->SetActorEnableCollision(false);
 }

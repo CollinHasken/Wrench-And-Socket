@@ -24,6 +24,10 @@ public:
 	// Save player data
 	void Serialize(FArchive& Ar, ARCPlayerState& PlayerState);
 
+	// Current checkpoint path
+	UPROPERTY(SaveGame)
+	FSoftObjectPath CheckpointPath;
+
 	// Data for infos
 	UPROPERTY()
 	TMap<const UClass*, FDataMap> DataClassMap;
@@ -42,22 +46,15 @@ public:
 	virtual void Serialize(FArchive& Ar) override;
 
 	/**
-	 * Save the player data for a level transition 
-	 * @param SaveGame	The Save to save to
+	 * Set the current checkpoint to respawn from
+	 * @param Checkpoint The checkpoint to respawn at	
 	 */
-	void SaveForLevelTransition(class URCLevelTransitionSave* SaveGame);
+	UFUNCTION(BlueprintCallable)
+	void SetCheckpoint(const AActor* Checkpoint);
 
-	/**
-	 * Load the player data for a level transition
-	 * @param SaveGame	The Save to load from
-	 */
-	void LoadForLevelTransition(const class URCLevelTransitionSave* SaveGame);
-
-	/**
-	 * Collect the given collectible
-	 * @param Collectible	The collectible to collect
-	 */
-	void CollectCollectible(class ACollectible* Collectible);
+	// Get the current checkpoint to respawn from
+	UFUNCTION(BlueprintCallable)
+	AActor* GetCheckpoint() const;
 
 	/**
 	 * Find or add the data for a specific primary asset
@@ -116,9 +113,26 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UBaseData* AddDataForAsset(const UClass* DataClass, const FPrimaryAssetId& AssetId);
 
+	/**
+	 * Collect the given collectible
+	 * @param Collectible	The collectible to collect
+	 */
+	void CollectCollectible(class ACollectible* Collectible);
+
+	/**
+	 * Save the player data for a level transition
+	 * @param SaveGame	The Save to save to
+	 */
+	void SaveForLevelTransition(class URCLevelTransitionSave* SaveGame);
+
+	/**
+	 * Load the player data for a level transition
+	 * @param SaveGame	The Save to load from
+	 */
+	void LoadForLevelTransition(const class URCLevelTransitionSave* SaveGame);
+
 	// Get the Collectible Collected delegate
 	FOnCollectibleCollected& OnCollectibleCollected() { return CollectibleCollectedDelegate; }
-
 private:
 	/**
 	 * Add a data for a specific primary asset, skips checking for uniqueness

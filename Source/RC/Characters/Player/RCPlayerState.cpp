@@ -1,9 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "RCPlayerState.h"
 
+#include "Engine/AssetManager.h"
+
 #include "RC/Debug/Debug.h"
 #include "RC/Characters/Player/RCCharacter.h"
 #include "RC/Collectibles/Collectible.h"
+#include "RC/Framework/RCGameInstance.h"
 #include "RC/Save/RCSaveGame.h"
 #include "RC/Weapons/Weapons/PlayerWeapons/BasePlayerWeapon.h"
 
@@ -83,34 +86,36 @@ void ARCPlayerState::Serialize(FArchive& Ar)
 	}
 }
 
-// Save the player data for a level transition 
-void ARCPlayerState::SaveForLevelTransition(URCLevelTransitionSave* SaveGame)
-{
-	ASSERT_RETURN(SaveGame != nullptr);
+// Set the current checkpoint to respawn from
+void ARCPlayerState::SetCheckpoint(const AActor* Checkpoint)
+{ 
+	SaveData.CheckpointPath = FSoftObjectPath(Checkpoint); 
 
-	// Pass the array to fill with data from Player State
-	FMemoryWriter MemWriter(SaveGame->SavedPlayer.PlayerStateByteData);
-	FSaveGameArchive Ar(MemWriter, true);
-	Serialize(Ar);
+	URCGameInstance* GameInstance = GetGameInstance<URCGameInstance>();
+	ASSERT_RETURN(GameInstance != nullptr);
 
-	ARCCharacter* ControlledCharacter = Cast<ARCCharacter>(GetPawn());
-	ASSERT_RETURN(ControlledCharacter != nullptr);
-
-	SaveGame->SavePlayer(ControlledCharacter);
+	bool bSucceeded = GameInstance->AutoSave();
+	LOG_CHECK(bSucceeded, LogSave, Error, "Unable to auto save after checkpoint");
 }
 
-// Load the player data for a level transition
-void ARCPlayerState::LoadForLevelTransition(const URCLevelTransitionSave* SaveGame)
+// Get the current checkpoint to respawn from
+AActor* ARCPlayerState::GetCheckpoint() const
 {
-	// Convert binary array back into actor's variables
-	FMemoryReader MemReader(SaveGame->SavedPlayer.PlayerStateByteData);
-	FSaveGameArchive Ar(MemReader, true);
-	Serialize(Ar);
+	if (SaveData.CheckpointPath.IsNull())
+	{
+		return nullptr;
+	}
 
-	ARCCharacter* ControlledCharacter = Cast<ARCCharacter>(GetPawn());
-	ASSERT_RETURN(ControlledCharacter != nullptr);
+	UAssetManager& AssetManager = UAssetManager::Get();
+	FAssetData CheckpointData;
+	AssetManager.GetAssetDataForPath(SaveData.CheckpointPath, CheckpointData);
 
-	SaveGame->LoadPlayer(ControlledCharacter);
+	if (!CheckpointData.IsAssetLoaded())
+	{
+		return nullptr;
+	}
+
+	return Cast<AActor>(CheckpointData.GetAsset());
 }
 
 // Collect the given collectible
@@ -175,4 +180,34 @@ UBaseData* ARCPlayerState::AddDataForAssetQuick(const UClass* DataClass, const F
 
 	Data->SetDefaults(AssetId);
 	return Data;
+}
+
+// Save the player data for a level transition 
+void ARCPlayerState::SaveForLevelTransition(URCLevelTransitionSave* SaveGame)
+{
+	ASSERT_RETURN(SaveGame != nullptr);
+
+	// Pass the array to fill with data from Player State
+	FMemoryWriter MemWriter(SaveGame->SavedPlayer.PlayerStateByteData);
+	FSaveGameArchive Ar(MemWriter, true);
+	Serialize(Ar);
+
+	ARCCharacter* ControlledCharacter = Cast<ARCCharacter>(GetPawn());
+	ASSERT_RETURN(ControlledCharacter != nullptr);
+
+	SaveGame->SavePlayer(ControlledCharacter);
+}
+
+// Load the player data for a level transition
+void ARCPlayerState::LoadForLevelTransition(const URCLevelTransitionSave* SaveGame)
+{
+	// Convert binary array back into actor's variables
+	FMemoryReader MemReader(SaveGame->SavedPlayer.PlayerStateByteData);
+	FSaveGameArchive Ar(MemReader, true);
+	Serialize(Ar);
+
+	ARCCharacter* ControlledCharacter = Cast<ARCCharacter>(GetPawn());
+	ASSERT_RETURN(ControlledCharacter != nullptr);
+
+	SaveGame->LoadPlayer(ControlledCharacter);
 }

@@ -15,6 +15,20 @@ ABaseDestructible::ABaseDestructible()
 	Destructible = CreateDefaultSubobject<UDestructibleComponent>(TEXT("Destructible"));
 }
 
+// Save destructible status
+void ABaseDestructible::Serialize(FArchive& Ar)
+{
+	Super::Serialize(Ar);
+
+	if (Ar.IsSaveGame())
+	{
+		if (Destructible != nullptr)
+		{
+			Ar << *Destructible;
+		}
+	}
+}
+
 // Request for this character to be damaged
 void ABaseDestructible::RequestDamage(FDamageRequestParams& Params)
 {
@@ -26,6 +40,16 @@ void ABaseDestructible::RequestDamage(FDamageRequestParams& Params)
 	 * Check if it was from wrench
 	 * 
 	 */
-
 	Destructible->ApplyHit();
+}
+
+// Sets the actor to be hidden in the game
+void ABaseDestructible::SetActorHiddenInGame(bool bNewHidden)
+{
+	Super::SetActorHiddenInGame(bNewHidden);
+
+	if (Mesh != nullptr)
+	{
+		Mesh->SetSimulatePhysics(false);
+	}
 }
