@@ -85,6 +85,8 @@ void ABasePlayerWeapon::SetWielder(ARCCharacter* NewWielder)
 // Called each frame
 void ABasePlayerWeapon::Tick(float DeltaTime)
 {
+	Super::Tick(DeltaTime);
+
 	// Try to perform the trigger action again if the cooldown has expired
 	if (CooldownTimer.Elapsed())
 	{
@@ -113,7 +115,15 @@ int ABasePlayerWeapon::GetMaxAmmo() const
 // Update the trigger status
 void ABasePlayerWeapon::UpdateTriggerStatus(const ETriggerStatus& NewTriggerStatus)
 {
+	if (NewTriggerStatus == CurrentTriggerStatus)
+	{
+		return;
+	}
+
 	CurrentTriggerStatus = NewTriggerStatus;
+
+	OnTriggerStatusUpdated();
+
 	PerformTriggerAction();
 }
 

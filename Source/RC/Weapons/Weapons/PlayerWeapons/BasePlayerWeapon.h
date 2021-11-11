@@ -90,6 +90,9 @@ protected:
 	// Determine if the weapon can attack now
 	bool CanAttack() const override;
 
+	// Called when the trigger status updates
+	virtual void OnTriggerStatusUpdated() {};
+
 	// Perform the action dependent on the current trigger status
 	bool PerformTriggerAction();
 

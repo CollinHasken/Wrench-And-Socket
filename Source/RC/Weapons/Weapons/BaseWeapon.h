@@ -97,6 +97,10 @@ protected:
 	// The actor wielding this weapon
 	class ABaseCharacter* Wielder = nullptr;
 
+	// The current cooldown
+	UPROPERTY(BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	float CurrentCooldown = 0;
+
 	// Timer to keep track of cooling down
 	FTimeStamp CooldownTimer;
 

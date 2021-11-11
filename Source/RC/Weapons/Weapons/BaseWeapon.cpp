@@ -31,6 +31,12 @@ void ABaseWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ASSERT(WeaponInfo != nullptr);
+	if (WeaponInfo != nullptr)
+	{
+		CurrentCooldown = WeaponInfo->Cooldown;
+	}
+
 	// Search for a blueprint added weapon component
 	if (WeaponComponent == nullptr)
 	{
@@ -237,5 +243,5 @@ void ABaseWeapon::AttackEnded(bool bInterrupted)
 {
 	bWielderAttackMontagePlaying = false;
 	bWeaponAttackMontagePlaying = false;
-	CooldownTimer.Set(WeaponInfo->Cooldown);
+	CooldownTimer.Set(CurrentCooldown);
 }
