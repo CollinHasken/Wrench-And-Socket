@@ -88,11 +88,15 @@ protected:
 	// Called via input to attack with full trigger
 	void FullAttack();
 
+	// Called via input to stop attacking with full trigger
+	void FullAttackStop();
+
 	// Called via input to attack with half trigger
 	void HalfAttack();
 
-	// Called via input to stop attacking
-	void StopAttack();
+	// Called via input to stop attacking with half trigger
+	void HalfAttackStop();
+
 
 	/** 
 	 * Called via input to update attacking with the current weapon 
@@ -172,7 +176,11 @@ private:
 	// Stimuli Source for AI perception
 	class UAIPerceptionStimuliSourceComponent* Stimulus;
 
-	ETriggerStatus TriggerOverride = ETriggerStatus::NONE;
+	// Whether the Full Attack action is being pressed
+	bool bFullAttackHeld = false;
+
+	// Whether the Half Attack action is being pressed
+	bool bHalfAttackHeld = false;
 
 	// Timer to keep track of level up slowmo
 	FTimeStamp LevelUpTimer;

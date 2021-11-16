@@ -26,6 +26,9 @@ class RC_API ABaseWeapon : public AActor, public IAssetDataInterface
 public:	
 	ABaseWeapon();
 
+	// Called each frame
+	void Tick(float DeltaTime) override;
+
 	/**
 	 * Set the new wielder for this weapon
 	 * @param NewWielder		The pawn that is now wielding this weapon
@@ -81,6 +84,9 @@ protected:
 	 * @param bInterrupted	Whether the attack was interrupted
 	 */
 	virtual void AttackEnded(bool bInterrupted);
+
+	// Called when the cooldown has ended
+	virtual void CooldownEnded() {};
 
 	// The current weapon config
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))

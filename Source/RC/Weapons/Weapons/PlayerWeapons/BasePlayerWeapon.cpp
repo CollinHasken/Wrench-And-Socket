@@ -38,7 +38,7 @@ const UPlayerWeaponInfo* ABasePlayerWeapon::GetPlayerWeaponInfo() const
 // Get the weapon data
 const UPlayerWeaponData* ABasePlayerWeapon::GetWeaponData()
 { 
-	if (PlayerWeaponData == nullptr)
+	if (PlayerWeaponData == nullptr && PlayerWeaponInfo != nullptr)
 	{
 		APawn* Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 		ASSERT(Player != nullptr, "No current player, unable to get weapon data");
@@ -80,22 +80,6 @@ void ABasePlayerWeapon::SetWielder(ARCCharacter* NewWielder)
 
 	PlayerWeaponData->CurrentWeapon = this;
 	RecomputeDamage();
-}
-
-// Called each frame
-void ABasePlayerWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	// Try to perform the trigger action again if the cooldown has expired
-	if (CooldownTimer.Elapsed())
-	{
-		CooldownTimer.Invalidate();
-		if (PlayerWeaponInfo != nullptr && PlayerWeaponInfo->bContinuousAttack)
-		{
-			PerformTriggerAction();
-		}
-	}
 }
 
 // Get the current ammo 
@@ -183,6 +167,16 @@ bool ABasePlayerWeapon::PerformHalfTrigger()
 {
 	PlayerAttackDelegate.Broadcast(this, ETriggerStatus::HALF);
 	return true;
+}
+
+// Called when the cooldown has ended
+void ABasePlayerWeapon::CooldownEnded()
+{
+	// Try to perform the trigger action again if the cooldown has expired
+	if (PlayerWeaponInfo != nullptr && PlayerWeaponInfo->bContinuousAttack)
+	{
+		PerformTriggerAction();
+	}
 }
 
 // Get the total XP needed to get to the next level

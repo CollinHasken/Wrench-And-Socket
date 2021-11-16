@@ -6,6 +6,9 @@
 #include "RC/Weapons/Weapons/Components/WeaponComponent.h"
 #include "WeaponProjectileComponent.generated.h"
 
+/**
+ * Weapon that can fire a projectile towards a target character or location
+ */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class RC_API UWeaponProjectileComponent : public UWeaponComponent
 {

@@ -40,8 +40,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void SetDamage(int NewDamage) { Damage = NewDamage; }
 
+	// Set the range this weapon has
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void SetRange(int NewRange) { Range = NewRange; }
+
 	// Get the current damage this weapon should deal
 	FORCEINLINE float GetDamage() { return Damage; }
+
+	// Get the current range this weapon has
+	FORCEINLINE float GetRange() { return Range; }
 
 protected:
 	friend class ABaseWeapon;
@@ -58,6 +65,10 @@ protected:
 	// Damage this weapon does
 	UPROPERTY(BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	int Damage;
+
+	// Range this weapon has
+	UPROPERTY(BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	int Range;
 
 	// Wielder of this weapon
 	class ABaseCharacter* Wielder = nullptr;

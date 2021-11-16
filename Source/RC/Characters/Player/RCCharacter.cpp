@@ -209,9 +209,9 @@ void ARCCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	// Weapon inputs
 	PlayerInputComponent->BindAction("Wrench", IE_Pressed, this, &ARCCharacter::WrenchAttack);
 	PlayerInputComponent->BindAction("FullAttack", IE_Pressed, this, &ARCCharacter::FullAttack);
-	PlayerInputComponent->BindAction("FullAttack", IE_Released, this, &ARCCharacter::StopAttack);
+	PlayerInputComponent->BindAction("FullAttack", IE_Released, this, &ARCCharacter::FullAttackStop);
 	PlayerInputComponent->BindAction("HalfAttack", IE_Pressed, this, &ARCCharacter::HalfAttack);
-	PlayerInputComponent->BindAction("HalfAttack", IE_Released, this, &ARCCharacter::StopAttack);
+	PlayerInputComponent->BindAction("HalfAttack", IE_Released, this, &ARCCharacter::HalfAttackStop);
 	PlayerInputComponent->BindAxis("Attack", this, &ARCCharacter::Attack);	
 	PlayerInputComponent->BindAction("NextWeapon", IE_Pressed, this, &ARCCharacter::EquipNextWeapon);
 	PlayerInputComponent->BindAction("PreviousWeapon", IE_Pressed, this, &ARCCharacter::EquipPreviousWeapon);
@@ -295,22 +295,25 @@ void ARCCharacter::WrenchAttack()
 // Called via input to attack with full trigger
 void ARCCharacter::FullAttack()
 {
-	// Set the override for the Attack function to use
-	TriggerOverride = ETriggerStatus::FULL;
+	bFullAttackHeld = true;
+}
+
+// Called via input to stop attacking with full trigger
+void ARCCharacter::FullAttackStop()
+{
+	bFullAttackHeld = false;
 }
 
 // Called via input to attack with half trigger
 void ARCCharacter::HalfAttack()
 {
-	// Set the override for the Attack function to use
-	TriggerOverride = ETriggerStatus::HALF;
+	bHalfAttackHeld = true;
 }
 
-// Called via input to stop attacking
-void ARCCharacter::StopAttack()
+// Called via input to stop attacking with half trigger
+void ARCCharacter::HalfAttackStop()
 {
-	// Set the override for the Attack function to use
-	TriggerOverride = ETriggerStatus::NONE;
+	bHalfAttackHeld = false;
 }
 
 // Called via input to update attacking with the current weapon
@@ -318,7 +321,7 @@ void ARCCharacter::Attack(float Value)
 {	
 	ASSERT_RETURN(Inventory != nullptr);
 
-	ETriggerStatus TriggerStatus = TriggerOverride != ETriggerStatus::NONE ? TriggerOverride : URCStatics::TriggerValueToStatus(Value);
+	ETriggerStatus TriggerStatus = bFullAttackHeld ? ETriggerStatus::FULL : (bHalfAttackHeld ? ETriggerStatus::HALF : URCStatics::TriggerValueToStatus(Value));
 
 	// If we had the wrench equipped
 	ABasePlayerWeapon* EquippedWeapon = nullptr;

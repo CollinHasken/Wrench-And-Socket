@@ -65,6 +65,18 @@ void ABaseWeapon::InitWeaponComponent()
 	}
 }
 
+// Called each frame
+void ABaseWeapon::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (CooldownTimer.Elapsed())
+	{
+		CooldownTimer.Invalidate();
+		CooldownEnded();
+	}
+}
+
 // Called when the weapon is being destroyed
 void ABaseWeapon::EndPlay(const EEndPlayReason::Type Reason)
 {

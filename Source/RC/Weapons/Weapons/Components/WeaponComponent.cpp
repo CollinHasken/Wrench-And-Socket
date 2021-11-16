@@ -9,6 +9,7 @@
 void UWeaponComponent::Init(const UWeaponInfo& WeaponInfo)
 {
 	SetDamage(WeaponInfo.BaseDamage);
+	SetRange(WeaponInfo.BaseRange);
 	WeaponInfoId = WeaponInfo.GetPrimaryAssetId();
 }
 

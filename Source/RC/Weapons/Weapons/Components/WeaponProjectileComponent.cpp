@@ -43,8 +43,6 @@ bool UWeaponProjectileComponent::Attack()
 	UWorld* World = GetWorld();
 	ASSERT_RETURN_VALUE(World != nullptr, false);
 
-	auto BulletTransform = GetBulletOffsetSocket()->GetSocketTransform(WeaponMesh);
-
 	// Get the target
 	FVector Target;
 	if (WielderCamera != nullptr)
@@ -55,8 +53,8 @@ bool UWeaponProjectileComponent::Attack()
 
 		FHitResult Hit(EForceInit::ForceInit);
 		FVector Start = WielderCamera->GetComponentLocation();
-		FVector End = Start + (WielderCamera->GetComponentRotation().Vector() * 4000);
-		GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Camera, RV_TraceParams);
+		FVector End = Start + (WielderCamera->GetComponentRotation().Vector() * GetRange());
+		World->LineTraceSingleByChannel(Hit, Start, End, ECC_Camera, RV_TraceParams);
 
 		Target = Hit.bBlockingHit ? Hit.ImpactPoint : End;
 	}

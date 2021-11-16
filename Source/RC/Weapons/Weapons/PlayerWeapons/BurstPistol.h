@@ -10,7 +10,9 @@
 #include "BurstPistol.generated.h"
 
 /**
- * 
+ *  A basic pistol
+ *  - Full Trigger: Increase fire rate over time and lose accuracy, like a gatling gun
+ *  - Half Trigger: Precision semi-auto shots
  */
 UCLASS(Abstract, Blueprintable)
 class RC_API ABurstPistol : public ABasePlayerWeapon
@@ -31,7 +33,7 @@ protected:
 	bool PerformHalfTrigger() override;
 
 	// The curve for the cooldown applied while the trigger is held
-	UPROPERTY(Category = Mesh, EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	class UCurveFloat* RapidCooldownCurve = nullptr;
 
 	// Time stamp of when the trigger started being held

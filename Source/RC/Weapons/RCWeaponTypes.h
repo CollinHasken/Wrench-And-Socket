@@ -120,6 +120,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	float BaseDamage = 1;
 
+	// The base range the weapon has
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
+	float BaseRange = 4000;
+
 	// The socket that we'll attach this weapon to
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	FName SocketName = FName();

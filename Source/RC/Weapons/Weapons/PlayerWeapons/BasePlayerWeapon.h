@@ -28,9 +28,6 @@ class RC_API ABasePlayerWeapon : public ABaseWeapon
 	GENERATED_BODY()
 
 public:
-	// Called each frame
-	void Tick(float DeltaTime) override;
-
 	// Get the player weapon info
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	const UPlayerWeaponInfo* GetPlayerWeaponInfo() const;
@@ -101,6 +98,9 @@ protected:
 
 	// Perform an action when the trigger is held halfway
 	virtual bool PerformHalfTrigger();
+
+	// Called when the cooldown has ended
+	void CooldownEnded() override;
 
 	// Determine and cache the current amount of damage the weapon should do
 	virtual void RecomputeDamage();
