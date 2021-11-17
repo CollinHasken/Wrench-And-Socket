@@ -114,6 +114,14 @@ public:
 	UBaseData* AddDataForAsset(const UClass* DataClass, const FPrimaryAssetId& AssetId);
 
 	/**
+	 * Find the data map for a data class
+	 * @param DataClass	The class of the data map to retrieve
+	 *
+	 * Returns the data map if found
+	 */
+	const TMap<FPrimaryAssetId, UBaseData*>* FindDataMap(const UClass* DataClass);
+
+	/**
 	 * Collect the given collectible
 	 * @param Collectible	The collectible to collect
 	 */

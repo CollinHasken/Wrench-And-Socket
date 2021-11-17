@@ -82,7 +82,7 @@ public:
 	 * Grant an amount of the collectible
 	 * @param Amount The amount of the collectible to grant
 	 */
-	void GrantCollectible(int Amount);
+	virtual void GrantCollectible(int Amount);
 
 	// Current amount of the collectible the player has
 	UPROPERTY(BlueprintReadOnly, Category = Collectible, SaveGame)

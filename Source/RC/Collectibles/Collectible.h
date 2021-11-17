@@ -13,7 +13,7 @@
 #include "Collectible.generated.h"
 
 /**
-* Config for every weapon
+* Base collectible info
 */
 UCLASS(BlueprintType)
 class RC_API UCollectibleInfo : public UPrimaryDataAsset
@@ -74,6 +74,10 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	// The collectible config
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
+	UCollectibleInfo* CollectibleInfo = nullptr;
 
 	// Pointer to our target we're moving towards
 	TWeakObjectPtr<class AActor> CurrentTargetW = nullptr;
@@ -163,9 +167,9 @@ private:
 	 */
 	bool FindQuadraticCoefficients(float* A, float* B) const;
 
-	// The collectible config
+	// The collectible data class
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
-	UCollectibleInfo* CollectibleInfo = nullptr;
+	TSubclassOf<class UCollectibleData> CollectibleDataClass = nullptr;
 
 	// The collectible data
 	class UCollectibleData* CollectibleData = nullptr;

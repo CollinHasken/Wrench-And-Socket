@@ -188,6 +188,10 @@ public:
 	// The base max ammo for the weapon. Only used for player weapons
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile, Meta = (EditCondition = "bHasProjectile", EditConditionHides))
 	int BaseMaxAmmo = 150;
+
+	// ID of the ammo info
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile, Meta = (EditCondition = "bHasProjectile", EditConditionHides))
+	class UAmmoInfo* AmmoInfo;
 };
 
 /**
@@ -211,6 +215,12 @@ public:
 	 * @param XP The amount of XP to grant
 	 */
 	void GrantDamageXP(float XP);
+
+	/**
+	 * Grant ammo
+	 * @param Ammo The amount of ammo to grant
+	 */
+	void GrantAmmo(int Ammo);
 
 	/**
 	 * SAVE DATA

@@ -127,7 +127,7 @@ void ACollectible::StartCollecting(class AActor* Target)
 		ARCPlayerState* PlayerState = TargetPlayer->GetPlayerState<ARCPlayerState>();
 		ASSERT_RETURN(PlayerState != nullptr, "Player doesn't have player state");
 
-		CollectibleData = PlayerState->FindOrAddDataForAsset<UCollectibleData>(CollectibleInfo->GetPrimaryAssetId());
+		CollectibleData = Cast<UCollectibleData>(PlayerState->FindOrAddDataForAsset(CollectibleDataClass, CollectibleInfo->GetPrimaryAssetId()));
 		ASSERT_RETURN(CollectibleData != nullptr, "Weapon Data not able to be added");
 	}
 }
@@ -145,7 +145,7 @@ int ACollectible::Collect()
 		}
 		else
 		{
-			CollectibleData = PlayerState->FindOrAddDataForAsset<UCollectibleData>(CollectibleInfo->GetPrimaryAssetId());
+			CollectibleData = Cast<UCollectibleData>(PlayerState->FindOrAddDataForAsset(CollectibleDataClass, CollectibleInfo->GetPrimaryAssetId()));
 			ASSERT(CollectibleData != nullptr, "Weapon Data not able to be added");		
 		}
 	}

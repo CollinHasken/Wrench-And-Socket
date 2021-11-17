@@ -211,3 +211,9 @@ void ARCPlayerState::LoadForLevelTransition(const URCLevelTransitionSave* SaveGa
 
 	SaveGame->LoadPlayer(ControlledCharacter);
 }
+
+// Find the data map for a data class
+const TMap<FPrimaryAssetId, UBaseData*>* ARCPlayerState::FindDataMap(const UClass* DataClass)
+{
+	return SaveData.DataClassMap.Find(DataClass)->operator->();
+}
