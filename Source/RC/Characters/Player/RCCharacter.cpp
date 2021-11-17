@@ -323,23 +323,10 @@ void ARCCharacter::Attack(float Value)
 
 	ETriggerStatus TriggerStatus = bFullAttackHeld ? ETriggerStatus::FULL : (bHalfAttackHeld ? ETriggerStatus::HALF : URCStatics::TriggerValueToStatus(Value));
 
-	// If we had the wrench equipped
+	// If we had the wrench equipped and a trigger is held, then switch to the last weapon
 	ABasePlayerWeapon* EquippedWeapon = nullptr;
-	if (Inventory->GetEquippedWeaponSlot() == EInventorySlot::SlotWrench)
-	{
-		// If we aren't triggering then do nothing
-		if (TriggerStatus == ETriggerStatus::NONE)
-		{
-			return;
-		}
-		// Switch back to the last weapon
-		EquippedWeapon = Inventory->EquipPreviousWeapon();
-	}
-	else
-	{
-		EquippedWeapon = Inventory->GetEquippedWeapon();
-	}
-
+	bool SwitchFromWrench = Inventory->GetEquippedWeaponSlot() == EInventorySlot::SlotWrench && TriggerStatus != ETriggerStatus::NONE;
+	EquippedWeapon = SwitchFromWrench ? Inventory->EquipPreviousWeapon() : Inventory->GetEquippedWeapon();
 	if (EquippedWeapon == nullptr) 
 	{
 		return;

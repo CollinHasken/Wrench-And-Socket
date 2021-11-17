@@ -124,7 +124,10 @@ ABasePlayerWeapon* UInventoryComponent::EquipSlot(EInventorySlot NewSlot)
 	ASSERT_RETURN_VALUE(NewWeapon != nullptr, nullptr, "New weapon wasn't able to be spawned");
 
 	EquippedWeapon = NewWeapon;
-	PreviouslyEquippedSlot = EquippedSlot;
+	if (EquippedSlot != EInventorySlot::SlotWrench)
+	{
+		PreviouslyEquippedSlot = EquippedSlot;
+	}
 	EquippedSlot = NewSlot;
 
 	// Tell weapon who the owner is
