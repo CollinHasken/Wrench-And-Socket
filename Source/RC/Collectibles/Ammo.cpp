@@ -54,8 +54,8 @@ void AAmmo::DetermineAmmo()
 
 	// Find the weapon with the lowest percentage full ammo
 	float LowestPercentFull = 1;
-	const TPair<FPrimaryAssetId, UBaseData*>* LowestWeaponPair = nullptr;
-	for (const TPair<FPrimaryAssetId, UBaseData*> WeaponDataPair : (*WeaponDataMap))
+	const FPrimaryAssetId* LowestWeaponKey = nullptr;
+	for (const TPair<FPrimaryAssetId, UBaseData*>& WeaponDataPair : (*WeaponDataMap))
 	{
 		UPlayerWeaponData* PlayerWeaponData = Cast<UPlayerWeaponData>(WeaponDataPair.Value);
 		ASSERT_CONTINUE(PlayerWeaponData != nullptr, "Data %s in player weapon data map but isn't of type UPlayerWeaponData", *WeaponDataPair.Key.ToString());
@@ -64,14 +64,14 @@ void AAmmo::DetermineAmmo()
 		if (PercentFull <= LowestPercentFull)
 		{
 			LowestPercentFull = PercentFull;
-			LowestWeaponPair = &WeaponDataPair;
+			LowestWeaponKey = &WeaponDataPair.Key;
 		}
 	}
-	ASSERT_RETURN(LowestWeaponPair != nullptr, "Data map was found but no weapon found");
+	ASSERT_RETURN(LowestWeaponKey != nullptr, "Data map was found but no weapon found");
 
 	// Get the ammo that this weapon uses
-	const UPlayerWeaponInfo* WeaponInfo = URCStatics::GetPrimaryAssetObject<UPlayerWeaponInfo>(LowestWeaponPair->Key);
-	ASSERT_RETURN(WeaponInfo != nullptr, "Unable to get weapon info %s", *LowestWeaponPair->Key.ToString());
+	const UPlayerWeaponInfo* WeaponInfo = URCStatics::GetPrimaryAssetObject<UPlayerWeaponInfo>(*LowestWeaponKey);
+	ASSERT_RETURN(WeaponInfo != nullptr, "Unable to get weapon info %s", *LowestWeaponKey->ToString());
 
 	CollectibleInfo = static_cast<UCollectibleInfo*>(WeaponInfo->AmmoInfo);
 }

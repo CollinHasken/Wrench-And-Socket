@@ -44,10 +44,11 @@ float UHealthComponent::ApplyDamage(const FDamageRequestParams& DamageParams)
 
 	// Remove health
 	float DamageDealt = FMath::Min(DamageParams.Damage, CurrentHealth);
+	float PreviousHealth = CurrentHealth;
 	CurrentHealth -= DamageParams.Damage;
 
 	// Broadcast damage
-	ActorDamagedDelegate.Broadcast(GetOwner(), CurrentHealth);
+	ActorHealthChangedDelegate.Broadcast(GetOwner(), PreviousHealth, CurrentHealth);
 
 	if (CurrentHealth <= 0)
 	{
@@ -62,6 +63,15 @@ float UHealthComponent::ApplyDamage(const FDamageRequestParams& DamageParams)
 		UAISense_Damage::ReportDamageEvent(Owner, Owner, Instigator, DamageParams.Damage, DamageParams.HitLocation, DamageParams.HitLocation);
 	}
 	return DamageDealt;
+}
+
+void UHealthComponent::GrantHealth(int Amount)
+{
+	float PreviousHealth = CurrentHealth;
+	CurrentHealth = FMath::Min(CurrentHealth + Amount, MaxHealth);
+
+	// Broadcast heal
+	ActorHealthChangedDelegate.Broadcast(GetOwner(), PreviousHealth, CurrentHealth);
 }
 
 // Once we've ran out of health

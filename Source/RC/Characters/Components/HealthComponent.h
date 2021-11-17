@@ -10,7 +10,7 @@
 #include "HealthComponent.generated.h"
 
 // Broadcasts when the actor this component is on has been damaged
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnActorDamaged, class AActor*, Actor, float, CurrentHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnActorHealthChanged, class AActor*, Actor, float, PreviousHealth, float, CurrentHealth);
 
 // Broadcasts when the actor this component is on has died
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActorDied, class AActor*, Actor);
@@ -38,8 +38,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float ApplyDamage(const FDamageRequestParams& DamageParams);
 
-	// Get the Actor Damaged delegate
-	FOnActorDamaged& OnActorDamaged() { return ActorDamagedDelegate; }
+	// Grant the given amount of health
+	void GrantHealth(int Amount);
+
+	// Get the Actor Health Changed delegate
+	FOnActorHealthChanged& OnActorHealthChanged() { return ActorHealthChangedDelegate; }
 
 	// Get the Actor Died delegate
 	FOnActorDied& OnActorDied() { return ActorDiedDelegate; }
@@ -64,9 +67,9 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Health, meta = (AllowPrivateAccess = "true"))
 	bool bIsDead = false;
 
-	// Broadcasts when the actor this component is on has been damaged
+	// Broadcasts when the actor this component is on its health changed
 	UPROPERTY(BlueprintAssignable, Category = Health, meta = (AllowPrivateAccess))
-	FOnActorDamaged ActorDamagedDelegate;
+	FOnActorHealthChanged ActorHealthChangedDelegate;
 
 	// Broadcasts when the actor this component is on has died
 	UPROPERTY(BlueprintAssignable, Category = Health, meta = (AllowPrivateAccess))
