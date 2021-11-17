@@ -76,7 +76,6 @@ void ACollectible::Tick(float DeltaTime)
 	{
 		CurrentTravelTime += DeltaTime;
 		float DistancePercentage = CurrentTravelTime * CurrentTravelTimeMaxInv;
-
 		FVector NextLocation(FVector::ZeroVector);
 		if (!FindTravelLocation(&NextLocation, DistancePercentage))
 		{
@@ -92,6 +91,12 @@ void ACollectible::Tick(float DeltaTime)
 // Start the collection process of moving towards the target
 void ACollectible::StartCollecting(class AActor* Target)
 {
+	// Already collecting
+	if (bIsTraveling)
+	{
+		return;
+	}
+
 	if (Target == nullptr)
 	{
 		return;
@@ -207,7 +212,6 @@ void ACollectible::FindTravelLocation(FVector* FoundLocation, float DistancePerc
 	ASSERT_RETURN(FoundLocation != nullptr);
 
 	FindRelativeTravelLocation(FoundLocation, DistancePercentage, StartToTargetXY, TargetToStartDist, A,  B);
-	//is start location right?
 	*FoundLocation += StartLocation;
 }
 
@@ -304,10 +308,8 @@ void ACollectible::Debug(float DeltaTime)
 	float B = 0;
 	const FVector& TargetLocation = PlayerCharacter->GetActorLocation();
 	FindQuadraticCoefficients(&A, &B, DebugStartLocation, TargetLocation);
-	UE_LOG(LogCollectible, Verbose, TEXT("Collectible A: %f B: %f"), A, B);
 
 #if ENABLE_DRAW_DEBUG
-	//const FVector& StartLocation = GetActorLocation();
 	FVector2D StartToTargetXY(TargetLocation - DebugStartLocation);
 	float TargetDist = StartToTargetXY.Size();
 	StartToTargetXY.Normalize();
