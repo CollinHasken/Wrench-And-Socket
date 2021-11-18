@@ -26,16 +26,35 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 protected:
+	// Called when the game starts or when spawned
+	void BeginPlay() override;
+
 	// Called when the trigger status updates
-	void OnTriggerStatusUpdated() override;
+	void OnTriggerStatusUpdated(ETriggerStatus PreviousStatus) override;
 
 	// Perform an action when the trigger is held halfway
 	bool PerformHalfTrigger() override;
+
+	// Get the value on the curve give the timer
+	float GetValueOnCurve(const UCurveFloat* Curve, const FTimeStamp& TimeStamp, const float MaxTime);
 
 	// The curve for the cooldown applied while the trigger is held
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	class UCurveFloat* RapidCooldownCurve = nullptr;
 
-	// Time stamp of when the trigger started being held
-	FTimeStamp TriggerTimeStamp;
+	// The curve for the accuracy while the trigger is held
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	class UCurveFloat* RapidAccuracyCurve = nullptr;
+
+	// Time stamp of when the trigger started being held for cooldown changes
+	FTimeStamp CooldownTimeStamp;
+
+	// Time stamp of when the trigger started being held for accuracy changes
+	FTimeStamp AccuracyTimeStamp;
+
+	// The max cooldown time
+	float MaxCooldownTime = 0;
+
+	// The max accuracy time
+	float MaxAccuracyTime = 0;
 };

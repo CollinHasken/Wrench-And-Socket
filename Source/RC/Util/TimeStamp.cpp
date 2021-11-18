@@ -49,7 +49,7 @@ bool FTimeStamp::Elapsed() const
 
 	if (TimeStampSubsystem == nullptr)
 	{
-		UE_LOG(LogTimeStamp, Error, TEXT("TimeStamp Subsystem not initialized yet, trying to set a timer without a world?"));
+		UE_LOG(LogTimeStamp, Error, TEXT("TimeStamp Subsystem not initialized yet, trying to get elapsed on a timer without a world?"));
 		return false;
 	}
 	ASSERT_RETURN_VALUE(TimeStampSubsystem->GetWorld() != nullptr, false, "TimeStamp Subsystem doesn't have a world");
@@ -62,12 +62,31 @@ float FTimeStamp::GetTimeSince() const
 {
 	if (TimeStampSubsystem == nullptr)
 	{
-		UE_LOG(LogTimeStamp, Error, TEXT("TimeStamp Subsystem not initialized yet, trying to set a timer without a world?"));
+		UE_LOG(LogTimeStamp, Error, TEXT("TimeStamp Subsystem not initialized yet, trying to get time since on a timer without a world?"));
 		return false;
 	}
 	ASSERT_RETURN_VALUE(TimeStampSubsystem->GetWorld() != nullptr, false, "TimeStamp Subsystem doesn't have a world");
 
 	return TimeStampSubsystem->GetWorld()->GetTimeSeconds() - StartTime;
+}
+
+// Get the time until the timer ends
+float FTimeStamp::GetTimeRemaining() const
+{
+	if (TimeStampSubsystem == nullptr)
+	{
+		UE_LOG(LogTimeStamp, Error, TEXT("TimeStamp Subsystem not initialized yet, trying to get time remaining on a timer without a world?"));
+		return false;
+	}
+	ASSERT_RETURN_VALUE(TimeStampSubsystem->GetWorld() != nullptr, false, "TimeStamp Subsystem doesn't have a world");
+
+	return Time - TimeStampSubsystem->GetWorld()->GetTimeSeconds();
+}
+
+// Get the total duration of the timer
+float FTimeStamp::GetTotalDuration() const
+{
+	return Time - StartTime;
 }
 
 // Is the time stamp valid

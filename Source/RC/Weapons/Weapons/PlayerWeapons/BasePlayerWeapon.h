@@ -88,7 +88,7 @@ protected:
 	bool CanAttack() const override;
 
 	// Called when the trigger status updates
-	virtual void OnTriggerStatusUpdated() {};
+	virtual void OnTriggerStatusUpdated(ETriggerStatus PreviousStatus) {};
 
 	// Perform the action dependent on the current trigger status
 	bool PerformTriggerAction();

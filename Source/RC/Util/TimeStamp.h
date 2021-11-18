@@ -49,6 +49,20 @@ public:
 	float GetTimeSince() const;
 
 	/**
+	 * Get the time until the timer ends
+	 *
+	 * @Return The time until the timer ends
+	 */
+	float GetTimeRemaining() const;
+
+	/**
+	 * Get the total duration of the timer
+	 *
+	 * @Return The total duration of the timer
+	 */
+	float GetTotalDuration() const;
+
+	/**
 	 * Is the time stamp valid
 	 *
 	 * @Return True if the timestamp has been set

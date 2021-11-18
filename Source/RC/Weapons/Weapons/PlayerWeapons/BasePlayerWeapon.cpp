@@ -104,9 +104,10 @@ void ABasePlayerWeapon::UpdateTriggerStatus(const ETriggerStatus& NewTriggerStat
 		return;
 	}
 
+	ETriggerStatus PreviousStatus = CurrentTriggerStatus;
 	CurrentTriggerStatus = NewTriggerStatus;
 
-	OnTriggerStatusUpdated();
+	OnTriggerStatusUpdated(PreviousStatus);
 
 	PerformTriggerAction();
 }

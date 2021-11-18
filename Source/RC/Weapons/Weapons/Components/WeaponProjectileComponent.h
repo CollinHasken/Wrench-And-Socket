@@ -23,6 +23,8 @@ public:
 	// Attack with the weapon at the given target
 	bool AttackTarget(class ABaseCharacter* Target) override;
 
+	void SetAccuracy(float InAccuracy) { Accuracy = InAccuracy; }
+
 	// Returns Mesh subobject
 	FORCEINLINE const class USkeletalMeshSocket* GetBulletOffsetSocket() const { return BulletOffsetSocket; }
 
@@ -46,4 +48,6 @@ private:
 	TSubclassOf<class ABaseBullet> ProjectileClass;
 
 	const class USkeletalMeshComponent* WeaponMesh = nullptr;
+
+	float Accuracy = 1;
 };

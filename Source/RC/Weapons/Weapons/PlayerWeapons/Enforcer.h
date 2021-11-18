@@ -34,7 +34,7 @@ protected:
 	void PerformAttack() override;
 
 	// Called when the trigger status updates
-	void OnTriggerStatusUpdated() override;
+	void OnTriggerStatusUpdated(ETriggerStatus PreviousStatus) override;
 
 	// Perform an action when the trigger is held halfway
 	bool PerformHalfTrigger() override;

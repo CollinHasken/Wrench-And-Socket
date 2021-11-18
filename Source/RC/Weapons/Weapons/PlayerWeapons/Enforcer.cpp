@@ -57,7 +57,7 @@ void AEnforcer::PerformAttack()
 }
 
 // Called when the trigger status updates
-void AEnforcer::OnTriggerStatusUpdated()
+void AEnforcer::OnTriggerStatusUpdated(ETriggerStatus PreviousStatus)
 {
 	switch (CurrentTriggerStatus)
 	{

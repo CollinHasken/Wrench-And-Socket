@@ -124,6 +124,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	float BaseRange = 4000;
 
+	// The base accuracy for the weapon. 1 = fully accurate
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile)
+	float BaseAccuracy = 1;
+
 	// The socket that we'll attach this weapon to
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	FName SocketName = FName();
@@ -185,7 +189,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Projectile)
 	bool bHasProjectile = true;
 
-	// The base max ammo for the weapon. Only used for player weapons
+	// The base max ammo for the weapon
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile, Meta = (EditCondition = "bHasProjectile", EditConditionHides))
 	int BaseMaxAmmo = 150;
 

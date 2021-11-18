@@ -15,12 +15,13 @@ void UWeaponProjectileComponent::Init(const UWeaponInfo& WeaponInfo)
 {
 	Super::Init(WeaponInfo);
 
+	Accuracy = WeaponInfo.BaseAccuracy;
+
 	// Save off socket
 	const ABaseWeapon* Owner = GetOwner<ABaseWeapon>();
 	ASSERT_RETURN(Owner != nullptr, "Weapon component placed on %s. It needs to inherit from ABaseWeapon", *GetOwner()->GetName());
 
 	WeaponMesh = Owner->GetMesh();
-
 	if (WeaponMesh != nullptr)
 	{
 		const FName& SocketName = Owner->GetSocketName();
@@ -72,6 +73,7 @@ bool UWeaponProjectileComponent::AttackTarget(ABaseCharacter* Target)
 	return ShootAtTarget(Target);
 }
 
+#include "DrawDebugHelpers.h"
 // Shoot the weapon at the specified target
 bool UWeaponProjectileComponent::ShootAtTarget(const FVector& TargetLocation)
 {
@@ -94,6 +96,12 @@ bool UWeaponProjectileComponent::ShootAtTarget(const FVector& TargetLocation)
 
 	FVector Trajectory = TargetLocation - BulletTransform.GetLocation();
 	Trajectory.Normalize();
+
+	// Accuracy offset
+	if (!FMath::IsNearlyEqual(Accuracy, 1))
+	{
+		Trajectory = FMath::VRandCone(Trajectory, FMath::DegreesToRadians(25 * (1 - Accuracy)));
+	}
 
 	// Initialize bullet to send it off
 	FBulletData BulletData;
