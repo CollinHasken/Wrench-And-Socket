@@ -73,7 +73,6 @@ bool UWeaponProjectileComponent::AttackTarget(ABaseCharacter* Target)
 	return ShootAtTarget(Target);
 }
 
-#include "DrawDebugHelpers.h"
 // Shoot the weapon at the specified target
 bool UWeaponProjectileComponent::ShootAtTarget(const FVector& TargetLocation)
 {
