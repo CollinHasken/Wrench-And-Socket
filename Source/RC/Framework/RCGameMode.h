@@ -31,16 +31,6 @@ public:
 	void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 
 	/**
-	 * Return the specific player start actor that should be used for the next spawn
-	 * This will either use a previously saved startactor, or calls ChoosePlayerStart
-	 *
-	 * @param Player The AController for whom we are choosing a Player Start
-	 * @param IncomingName Specifies the tag of a Player Start to use
-	 * @returns Actor chosen as player start (usually a PlayerStart)
-	 */
-	AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName = TEXT(""));
-
-	/**
 	 * Save the persistent data for a level transition
 	 * @param Data The persistent data
 	 * @Returns whether the save succeeded

@@ -11,7 +11,6 @@
 #include "RC/Util/RCTypes.h"
 #include "RC/Weapons/Bullets/BaseBullet.h"
 #include "RC/Weapons/Weapons/BaseWeapon.h"
-#include <Runtime/Engine/Private/KismetTraceUtils.cpp>
 
 // Initialize the weapon component
 void UWeaponRaycastComponent::Init(const UWeaponInfo& WeaponInfo)
@@ -121,13 +120,11 @@ bool UWeaponRaycastComponent::ShootTowardsTarget(const FVector& TargetDirection)
 	FVector Start = VFXTransform.GetLocation();
 	FVector End = Start + (TargetDirection * GetRange() * .3f);
 	bool bHit = World->SweepMultiByProfile(Hits, Start, End, VFXTransform.GetRotation(), FName("OverlapOnlyActor"), FCollisionShape::MakeBox(CloseTraceHalfSize), TraceParams);
-	DrawDebugBoxTraceMulti(World, Start, End, CloseTraceHalfSize, VFXTransform.GetRotation().Rotator(), EDrawDebugTrace::ForDuration, bHit, Hits, FLinearColor::Green, FLinearColor::Red, 2);
 
 	// Find actors in far range
 	TArray<FHitResult> FarHits;
 	FVector FarEnd = End + (TargetDirection * GetRange() * .7f);
 	bool bFarHit = World->SweepMultiByProfile(FarHits, End, FarEnd, VFXTransform.GetRotation(), FName("OverlapOnlyActor"), FCollisionShape::MakeBox(FarTraceHalfSize), TraceParams);
-	DrawDebugBoxTraceMulti(World, End, FarEnd, FarTraceHalfSize, VFXTransform.GetRotation().Rotator(), EDrawDebugTrace::ForDuration, bFarHit, FarHits, FLinearColor::Green, FLinearColor::Red, 2);
 
 	// Setup damage params
 	FDamageRequestParams DamageParams;

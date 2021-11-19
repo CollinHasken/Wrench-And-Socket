@@ -22,13 +22,17 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	/** explosion FX */
+	// Explosion FX
 	UPROPERTY(EditDefaultsOnly, Category = Effect, meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* ExplosionFX;
 
-	/** Lifetime of effect in seconds */
+	// The spawned FX
+	UParticleSystemComponent* SpawnedFX;
+
+	// Lifetime of effect in seconds
 	UPROPERTY(EditDefaultsOnly, Category = Effect, meta = (AllowPrivateAccess = "true"))
 	float Lifetime = 2;
 };

@@ -24,9 +24,13 @@ public:
 	// Save player data
 	void Serialize(FArchive& Ar, ARCPlayerState& PlayerState);
 
-	// Current checkpoint path
+	// Checkpoint has been set
 	UPROPERTY(SaveGame)
-	FSoftObjectPath CheckpointPath;
+	bool bIsCheckpointSet;
+
+	// Current checkpoint transform
+	UPROPERTY(SaveGame)
+	FTransform CheckpointTransform;
 
 	// Data for infos
 	UPROPERTY()
@@ -52,9 +56,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetCheckpoint(const AActor* Checkpoint);
 
-	// Get the current checkpoint to respawn from
+	// Get the current checkpoint transform to respawn from
 	UFUNCTION(BlueprintCallable)
-	AActor* GetCheckpoint() const;
+	bool GetCheckpoint(FTransform& CheckpointTransform) const;
 
 	/**
 	 * Find or add the data for a specific primary asset

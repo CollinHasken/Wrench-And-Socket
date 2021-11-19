@@ -3,6 +3,7 @@
 #include "BaseBulletHitEffect.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 
 ABaseBulletHitEffect::ABaseBulletHitEffect()
 {
@@ -19,9 +20,19 @@ void ABaseBulletHitEffect::BeginPlay()
 	// Spawn emitter
 	if (ExplosionFX)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(this, ExplosionFX, GetActorLocation(), GetActorRotation());
+		SpawnedFX = UGameplayStatics::SpawnEmitterAtLocation(this, ExplosionFX, GetActorLocation(), GetActorRotation());
 	}
 
 	// Set how long to live
 	SetLifeSpan(Lifetime);
+}
+
+void ABaseBulletHitEffect::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (SpawnedFX)
+	{
+		SpawnedFX->Deactivate();
+	}
+
+	Super::EndPlay(EndPlayReason);
 }

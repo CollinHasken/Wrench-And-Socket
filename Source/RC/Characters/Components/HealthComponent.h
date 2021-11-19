@@ -29,6 +29,10 @@ public:
 	// Save off component's save data
 	friend FArchive& operator<<(FArchive& Ar, UHealthComponent& SObj);
 
+	// Is the actor this on dead
+	UFUNCTION(BlueprintPure)
+	bool IsDead() const { return bIsDead; }
+
 	/**
 	 * Apply damage requested
 	 * @param DamageParams	Params for the damage to apply

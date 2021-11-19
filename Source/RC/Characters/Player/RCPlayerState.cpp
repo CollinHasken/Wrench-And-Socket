@@ -89,7 +89,8 @@ void ARCPlayerState::Serialize(FArchive& Ar)
 // Set the current checkpoint to respawn from
 void ARCPlayerState::SetCheckpoint(const AActor* Checkpoint)
 { 
-	SaveData.CheckpointPath = FSoftObjectPath(Checkpoint); 
+	SaveData.bIsCheckpointSet = true;
+	SaveData.CheckpointTransform = Checkpoint->GetActorTransform();
 
 	URCGameInstance* GameInstance = GetGameInstance<URCGameInstance>();
 	ASSERT_RETURN(GameInstance != nullptr);
@@ -99,23 +100,14 @@ void ARCPlayerState::SetCheckpoint(const AActor* Checkpoint)
 }
 
 // Get the current checkpoint to respawn from
-AActor* ARCPlayerState::GetCheckpoint() const
+bool ARCPlayerState::GetCheckpoint(FTransform& CheckpointTransform) const
 {
-	if (SaveData.CheckpointPath.IsNull())
+	if (!SaveData.bIsCheckpointSet)
 	{
-		return nullptr;
+		return false;
 	}
-
-	UAssetManager& AssetManager = UAssetManager::Get();
-	FAssetData CheckpointData;
-	AssetManager.GetAssetDataForPath(SaveData.CheckpointPath, CheckpointData);
-
-	if (!CheckpointData.IsAssetLoaded())
-	{
-		return nullptr;
-	}
-
-	return Cast<AActor>(CheckpointData.GetAsset());
+	CheckpointTransform = SaveData.CheckpointTransform;
+	return true;
 }
 
 // Collect the given collectible

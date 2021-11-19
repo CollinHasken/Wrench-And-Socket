@@ -57,10 +57,10 @@ void ARCGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewP
 			Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 
 			// Now that the player state has loaded, move the player to any existing checkpoint
-			AActor* Checkpoint = PlayerState->GetCheckpoint();
-			if (Checkpoint != nullptr)
+			FTransform CheckpointTransform;
+			if (PlayerState->GetCheckpoint(CheckpointTransform))
 			{
-				Player->SetActorTransform(Checkpoint->GetTransform(), false, nullptr, ETeleportType::ResetPhysics);
+				Player->SetActorTransform(CheckpointTransform, false, nullptr, ETeleportType::ResetPhysics);
 			}
 		}
 
@@ -84,22 +84,6 @@ void ARCGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewP
 		ASSERT(PlayerState != nullptr, "Player doesn't have our player state");
 		Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 	}
-}
-
-// Return the specific player start actor that should be used for the next spawn
-AActor* ARCGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName/* = TEXT("")*/)
-{
-	const ARCPlayerState* PlayerState = Player->GetPlayerState<ARCPlayerState>();
-	if (PlayerState != nullptr)
-	{
-		AActor* Checkpoint = PlayerState->GetCheckpoint();
-		if (Checkpoint != nullptr)
-		{
-			return Checkpoint;
-		}
-	}
-
-	return Super::FindPlayerStart_Implementation(Player, IncomingName);
 }
 
 // Save the persistent data for a level transition
