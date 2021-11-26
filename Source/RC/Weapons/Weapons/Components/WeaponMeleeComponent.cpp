@@ -43,9 +43,11 @@ void UWeaponMeleeComponent::OnWeaponTriggerOverlap(UPrimitiveComponent*, AActor*
 		FDamageRequestParams DamageParams;
 		DamageParams.bFromPlayer = URCStatics::IsActorPlayer(Wielder);
 		DamageParams.Damage = Damage;
+		DamageParams.DamageType = DamageType;
 		DamageParams.Instigator = Wielder;
 		DamageParams.CauseId = WeaponInfoId;
 		DamageParams.HitLocation = HitResult.ImpactPoint;
+		DamageParams.HitNormal = HitResult.Normal;
 		DamageableActor->RequestDamage(DamageParams);
 	}
 }

@@ -43,6 +43,30 @@ void ABaseCharacter::RequestDamage(FDamageRequestParams& Params)
 	Params.Damage = DamageToDeal;
 	float DamageDealt = Health->ApplyDamage(Params);
 
+	// If damage was delt
+	if (DamageDealt > 0)
+	{
+		if (Params.DamageType == EDamageTypes::KNOCKBACK)
+		{
+			UCharacterMovementComponent* Movement = GetCharacterMovement();
+			if (Movement != nullptr)
+			{
+				// Impulse the character at a 45 degree angle
+				FVector Impulse = -Params.HitNormal;
+				Impulse.Z = 0;
+				Impulse.Normalize();
+				Impulse.Z = 1;
+				Impulse.Normalize();
+				Impulse *= 500;
+
+				// Compensate for any negative velocity so the character will knock up the same amount
+				Impulse += -Movement->Velocity;
+
+				Movement->AddImpulse(Impulse, true);
+			}
+		}
+	}
+
 	// Let the instigator know damage was dealt
 	ABaseCharacter* DamageInstigator = Params.Instigator.Get();
 	if (DamageInstigator != nullptr)

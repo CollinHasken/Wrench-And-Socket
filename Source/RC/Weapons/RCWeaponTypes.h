@@ -21,6 +21,16 @@ enum class ETriggerStatus : uint8
 };
 
 /**
+ * Damage types
+ */
+UENUM(BlueprintType, Category = "Damage")
+enum class EDamageTypes : uint8
+{	
+	NORMAL UMETA(DisplayName = "Normal"),
+	KNOCKBACK UMETA(DisplayName = "Knockback"),
+};
+
+/**
  * Damage request
  */
 USTRUCT(BlueprintType)
@@ -36,6 +46,10 @@ struct FDamageRequestParams
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	int Damage = 0;
 
+	// Damage type
+	UPROPERTY(BlueprintReadWrite, Category = Damage)
+	EDamageTypes DamageType = EDamageTypes::NORMAL;
+
 	// Who hit us 
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	TWeakObjectPtr<class ABaseCharacter> Instigator = nullptr;
@@ -47,6 +61,10 @@ struct FDamageRequestParams
 	// The location the damage happened
 	UPROPERTY(BlueprintReadWrite, Category = Damage)
 	FVector HitLocation = FVector::ZeroVector;
+
+	// The normal of where the damage happened
+	UPROPERTY(BlueprintReadWrite, Category = Damage)
+	FVector HitNormal = FVector::ZeroVector;
 };
 
 /**
@@ -76,6 +94,9 @@ struct FBulletData
 {
 	// Damage to deal
 	int Damage = 0;
+
+	// Damage type
+	EDamageTypes DamageType = EDamageTypes::NORMAL;
 
 	// Direction to go in
 	FVector Direction = FVector::ZeroVector;
@@ -115,6 +136,10 @@ public:
 	// The cooldown after each attack
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	float Cooldown = 0.5f;
+
+	// Damage type
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Attack)
+	EDamageTypes DamageType = EDamageTypes::NORMAL;
 
 	// The base damage to deal
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)

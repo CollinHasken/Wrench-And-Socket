@@ -60,6 +60,9 @@ protected:
 	// Damage to request on hit actor
 	int Damage = 0;
 
+	// Damage type
+	EDamageTypes DamageType = EDamageTypes::NORMAL;
+
 	// The character that shot this
 	TWeakObjectPtr<class ABaseCharacter> Shooter = nullptr;
 

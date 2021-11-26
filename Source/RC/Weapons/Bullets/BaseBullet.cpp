@@ -66,6 +66,7 @@ void ABaseBullet::PostInitializeComponents()
 void ABaseBullet::Init(const FBulletData& BulletData)
 {
 	Damage = BulletData.Damage;
+	DamageType = BulletData.DamageType;
 	Shooter = BulletData.Shooter;
 	Weapon = BulletData.Weapon;
 	ABaseWeapon* WeaponObj = Weapon.Get();
@@ -93,9 +94,11 @@ void ABaseBullet::OnImpact(const FHitResult& HitResult)
 			FDamageRequestParams DamageParams;
 			DamageParams.bFromPlayer = URCStatics::IsActorPlayer(Shooter.Get());
 			DamageParams.Damage = Damage;
+			DamageParams.DamageType = DamageType;
 			DamageParams.Instigator = Shooter;
 			DamageParams.CauseId = WeaponId;
 			DamageParams.HitLocation = HitResult.ImpactPoint;
+			DamageParams.HitNormal = HitResult.Normal;
 			DamageableActor->RequestDamage(DamageParams);
 		}
 	}

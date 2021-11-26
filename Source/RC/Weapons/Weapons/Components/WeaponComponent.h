@@ -70,6 +70,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	int Range;
 
+	// Damage type
+	EDamageTypes DamageType = EDamageTypes::NORMAL;
+
 	// Wielder of this weapon
 	class ABaseCharacter* Wielder = nullptr;
 

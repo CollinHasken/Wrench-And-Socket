@@ -130,6 +130,7 @@ bool UWeaponRaycastComponent::ShootTowardsTarget(const FVector& TargetDirection)
 	FDamageRequestParams DamageParams;
 	DamageParams.bFromPlayer = URCStatics::IsActorPlayer(Wielder);
 	DamageParams.Damage = GetDamage();
+	DamageParams.DamageType = DamageType;
 	DamageParams.Instigator = Wielder;
 	DamageParams.CauseId = WeaponInfoId;
 
@@ -170,6 +171,7 @@ bool UWeaponRaycastComponent::ShootTowardsTarget(const FVector& TargetDirection)
 
 			// Do the damage
 			DamageParams.HitLocation = Hit.ImpactPoint;
+			DamageParams.HitNormal = Hit.Normal;
 			DamageableActor->RequestDamage(DamageParams);
 
 			// Store that we damaged this actor
