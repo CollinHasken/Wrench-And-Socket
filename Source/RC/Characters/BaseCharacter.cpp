@@ -7,6 +7,7 @@
 
 #include "RC/Debug/Debug.h"
 #include "RC/Characters/Components/HealthComponent.h"
+#include "RC/Characters/Components/StatusEffectComponent.h"
 #include "RC/Characters/Player/RCCharacter.h"
 #include "RC/Util/RCStatics.h"
 
@@ -16,6 +17,8 @@ ABaseCharacter::ABaseCharacter()
 
 	Health = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
 	Health->OnActorDied().AddDynamic(this, &ABaseCharacter::OnActorDied);
+
+	StatusEffect = CreateDefaultSubobject<UStatusEffectComponent>(TEXT("Status Effects"));
 }
 
 // Save character's data

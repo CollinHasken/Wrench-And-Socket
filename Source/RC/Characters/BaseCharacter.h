@@ -43,6 +43,9 @@ public:
 	// Returns Health subobject
 	FORCEINLINE class UHealthComponent* GetHealth() const { return Health; }
 
+	// Returns Status Effect subobject
+	FORCEINLINE class UStatusEffectComponent* GetStatusEffect() const { return StatusEffect; }
+
 	// Returns the anim instance
 	FORCEINLINE class UAnimInstance* GetAnimInstance() const { return GetMesh() != nullptr ? GetMesh()->GetAnimInstance() : nullptr; }
 
@@ -59,6 +62,10 @@ private:
 	/** Health */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health, meta = (AllowPrivateAccess = "true"))
 	class UHealthComponent* Health;
+
+	/** Status Effect */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Status Effect", meta = (AllowPrivateAccess = "true"))
+	class UStatusEffectComponent* StatusEffect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = XP, meta = (AllowPrivateAccess = "true"))
 	float XPForKilling = 0;

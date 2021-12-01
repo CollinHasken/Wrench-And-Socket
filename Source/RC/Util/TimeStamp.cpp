@@ -32,6 +32,46 @@ void FTimeStamp::Set(const unsigned int NewTime)
 	Set(URCStatics::MillisecondsToSeconds(NewTime));
 }
 
+// Add time to the timer
+void FTimeStamp::AddTime(const float AdditionalTime)
+{
+	// If there isn't already a timer, just go ahead and start one
+	if (!IsValid())
+	{
+		Set(AdditionalTime);		
+	}
+	else
+	{
+		Time += AdditionalTime;
+	}
+}
+
+// Add time to the timer
+void FTimeStamp::AddTime(const unsigned int AdditionalTime)
+{
+	// Forward with it in seconds
+	AddTime(URCStatics::MillisecondsToSeconds(AdditionalTime));
+}
+
+// Reduce time from the timer
+void FTimeStamp::ReduceTime(const float TimeToReduce)
+{
+	// If there isn't already a timer, do nothing
+	if (!IsValid())
+	{
+		return;
+	}
+	// Prevent the timer from becoming invalid
+	Time = FMath::Max(Time - TimeToReduce, 0.0f);	
+}
+
+// Reduce time from the timer
+void FTimeStamp::ReduceTime(const unsigned int TimeToReduce)
+{
+	// Forward with it in seconds
+	ReduceTime(URCStatics::MillisecondsToSeconds(TimeToReduce));
+}
+
 // Invalidate the time stamp
 void FTimeStamp::Invalidate()
 {

@@ -68,6 +68,18 @@ enum class EQuickSlot : uint8
 	NUM_SLOTS	UMETA(Hidden)
 };
 
+/**
+ * How to handle adding a status effect stack when there's already a stack
+ */
+UENUM(BlueprintType, Category = "Status Effect")
+enum class EStatusEffectRequestType : uint8
+{
+	Override	UMETA(DisplayName = "Override Existing"),
+	Add			UMETA(DisplayName = "Add To Existing"),
+	Ignore		UMETA(DisplayName = "Ignore If Existing"),
+	Default		UMETA(DisplayName = "Default")
+};
+
 
 /**
  * Collectible save data

@@ -31,6 +31,34 @@ public:
 	 */
 	void Set(const float NewTime);
 
+	/**
+	 * Add time to the timer
+	 *
+	 * @param AdditionalTime	The time to add in seconds
+	 */
+	void AddTime(const float AdditionalTime);
+
+	/**
+	 * Add time to the timer
+	 *
+	 * @param AdditionalTime	The time to add in milliseconds
+	 */
+	void AddTime(const unsigned int AdditionalTime);
+
+	/**
+	 * Reduce time from the timer
+	 *
+	 * @param TimeToReduce	The time to reduce in seconds
+	 */
+	void ReduceTime(const float TimeToReduce);
+
+	/**
+	 * Reduce time to the timer
+	 *
+	 * @param TimeToReduce	The time to reduce in milliseconds
+	 */
+	void ReduceTime(const unsigned int TimeToReduce);
+
 	// Invalidate the time stamp
 	void Invalidate();
 
