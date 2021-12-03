@@ -49,6 +49,67 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	float Time = 0.0f;
 };
+/**
+ * Keep track of how many stacks for a status effect class
+ */
+USTRUCT()
+struct FStatusEffect
+{
+	GENERATED_BODY()
+
+	FStatusEffect() = default;
+	FStatusEffect(AActor* InOwner, const FStatusEffectRequest& Request) : Owner(InOwner), StatusEffectClass(Request.StatusEffectClass) {}
+
+	// Add a stack
+	void AddStack(EStatusEffectRequestType RequestType);
+
+	// Remove a stack
+	void RemoveStack();
+
+	// Remove all stacks
+	void RemoveAllStacks();
+
+	bool operator==(const FStatusEffect& rhs) const
+	{
+		return StatusEffectClass == rhs.StatusEffectClass;
+	}
+
+	bool operator==(const TSubclassOf<class UBaseStatusEffect>& rhs) const
+	{
+		return StatusEffectClass == rhs;
+	}
+
+	// The owner of this status effect
+	AActor* Owner = nullptr;
+
+	// The actual status effect
+	UPROPERTY()
+		class UBaseStatusEffect* StatusEffect = nullptr;
+
+	// The class of the status effect
+	TSubclassOf<class UBaseStatusEffect> StatusEffectClass = NULL;
+
+	// The amount of stacks of the status effect
+	int Stacks = 0;
+};
+
+/**
+ * Keep track of time remaining for a status effect
+ */
+USTRUCT()
+struct FStatusEffectTimed : public FStatusEffect
+{
+	GENERATED_BODY()
+
+	FStatusEffectTimed() = default;
+	FStatusEffectTimed(AActor* InOwner, const FStatusEffectTimedRequest& Request) : FStatusEffect(InOwner, Request) {};
+
+	// Add a stack with a given time before it expires
+	void AddTimedStack(float Time, EStatusEffectRequestType RequestType);
+
+	// Time stamp for when the status effect expires and will be removed
+	FTimeStamp ExpireTime;
+};
 
 /**
  * Component to hold active status effects
@@ -90,63 +151,11 @@ protected:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	/**
-	 * Keep track of how many stacks for a status effect class
-	 */
-	struct FStatusEffect
-	{
-		FStatusEffect() = default;
-		FStatusEffect(AActor* InOwner, const FStatusEffectRequest& Request) : Owner(InOwner), StatusEffectClass(Request.StatusEffectClass) {}
-
-		// Add a stack
-		void AddStack(EStatusEffectRequestType RequestType);
-
-		// Remove a stack
-		void RemoveStack();
-
-		// Remove all stacks
-		void RemoveAllStacks();
-
-		bool operator==(const FStatusEffect& rhs) const
-		{
-			return StatusEffectClass == rhs.StatusEffectClass;
-		}
-
-		bool operator==(const TSubclassOf<class UBaseStatusEffect>& rhs) const
-		{
-			return StatusEffectClass == rhs;
-		}
-
-		// The owner of this status effect
-		AActor* Owner = nullptr;
-
-		// The actual status effect
-		class UBaseStatusEffect* StatusEffect = nullptr;
-
-		// The class of the status effect
-		TSubclassOf<class UBaseStatusEffect> StatusEffectClass = NULL;
-
-		// The amount of stacks of the status effect
-		int Stacks = 0;
-	};
-
-	/**
-	 * Keep track of time remaining for a status effect
-	 */
-	struct FStatusEffectTimed : public FStatusEffect
-	{
-		FStatusEffectTimed(AActor* InOwner, const FStatusEffectTimedRequest& Request) : FStatusEffect(InOwner, Request) {};
-
-		// Add a stack with a given time before it expires
-		void AddTimedStack(float Time, EStatusEffectRequestType RequestType);
-
-		// Time stamp for when the status effect expires and will be removed
-		FTimeStamp ExpireTime;
-	};
-
 	// Active status effects
+	UPROPERTY()
 	TArray<FStatusEffect> ActiveStatusEffects;
 
 	// Active timed status effects
+	UPROPERTY()
 	TArray<FStatusEffectTimed> ActiveTimedStatusEffects;
 };

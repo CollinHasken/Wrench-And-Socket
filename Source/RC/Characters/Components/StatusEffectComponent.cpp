@@ -109,7 +109,7 @@ void UStatusEffectComponent::RemoveStatusEffectTimed(const TSubclassOf<UBaseStat
 }
 
 // Add a stack
-void UStatusEffectComponent::FStatusEffect::AddStack(EStatusEffectRequestType RequestType)
+void FStatusEffect::AddStack(EStatusEffectRequestType RequestType)
 {
 	switch (RequestType)
 	{
@@ -151,7 +151,7 @@ void UStatusEffectComponent::FStatusEffect::AddStack(EStatusEffectRequestType Re
 }
 
 // Remove a stack
-void UStatusEffectComponent::FStatusEffect::RemoveStack()
+void FStatusEffect::RemoveStack()
 {
 	// No stacks to remove
 	if (Stacks <= 0)
@@ -172,7 +172,7 @@ void UStatusEffectComponent::FStatusEffect::RemoveStack()
 }
 
 // Remove all stacks
-void UStatusEffectComponent::FStatusEffect::RemoveAllStacks()
+void FStatusEffect::RemoveAllStacks()
 {
 	// No stacks to remove
 	if (Stacks <= 0)
@@ -190,7 +190,7 @@ void UStatusEffectComponent::FStatusEffect::RemoveAllStacks()
 }
 
 // Add a stack with a given time before it expires
-void UStatusEffectComponent::FStatusEffectTimed::AddTimedStack(float Time, EStatusEffectRequestType RequestType)
+void FStatusEffectTimed::AddTimedStack(float Time, EStatusEffectRequestType RequestType)
 {
 	bool FirstStack = Stacks == 0;
 
