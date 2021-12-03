@@ -58,9 +58,9 @@ void ABaseCharacter::RequestDamage(FDamageRequestParams& Params)
 				FVector Impulse = -Params.HitNormal;
 				Impulse.Z = 0;
 				Impulse.Normalize();
-				Impulse.Z = 1;
+				Impulse.Z = 2.0f;
 				Impulse.Normalize();
-				Impulse *= 500;
+				Impulse *= 450;
 
 				// Compensate for any negative velocity so the character will knock up the same amount
 				Impulse += -Movement->Velocity;
