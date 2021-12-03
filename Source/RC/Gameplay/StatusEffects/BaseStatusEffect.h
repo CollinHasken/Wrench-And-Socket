@@ -19,6 +19,9 @@ class RC_API UBaseStatusEffect : public UObject
 	GENERATED_BODY()
 
 public:
+	// Set the owner of this status effect
+	void SetOwner(AActor* InOwner) { Owner = InOwner; }
+
 	// Called when the first stack has been added
 	UFUNCTION(BlueprintNativeEvent)
 	void OnAdded();
@@ -38,4 +41,8 @@ public:
 	// The request type to use by default when adding stacks for this status effect
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	EStatusEffectRequestType DefaultRequestType = EStatusEffectRequestType::Default;
+
+	// The owner of this status effect
+	UPROPERTY(BlueprintReadOnly)
+	AActor* Owner = nullptr;
 };

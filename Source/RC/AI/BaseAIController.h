@@ -134,6 +134,9 @@ public:
 	 */
 	EAIStateChangeResult RequestState(EAIState NewState);	
 
+	// Get the previous AI state
+	EAIState GetPreviousState() { return PreviousState; }
+
 	// Message to send out for nodes waiting on state chagnes
 	static const FName AIMessage_StateChangeFinished;
 
@@ -211,6 +214,9 @@ private:
 
 	// Requested AI state
 	EAIState RequestedState = EAIState::NUM_STATES;
+
+	// Previous AI state
+	EAIState PreviousState = EAIState::NUM_STATES;
 
 	// All the state transition predicates
 	TStateTransitionMap StateTransitions;

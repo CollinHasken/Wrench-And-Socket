@@ -28,7 +28,7 @@ void UStatusEffectComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 // Add a stack for the requested status effect
 void UStatusEffectComponent::AddStatusEffect(const FStatusEffectRequest& StatusEffectRequest)
 {
-	int StatusEffectIndex = ActiveStatusEffects.AddUnique(FStatusEffect(StatusEffectRequest));
+	int StatusEffectIndex = ActiveStatusEffects.AddUnique(FStatusEffect(GetOwner(), StatusEffectRequest));
 	ASSERT_RETURN(StatusEffectIndex != -1);
 
 	FStatusEffect& StatusEffect = ActiveStatusEffects[StatusEffectIndex];
@@ -38,7 +38,7 @@ void UStatusEffectComponent::AddStatusEffect(const FStatusEffectRequest& StatusE
 // Add a timed stack for the requested status effect
 void UStatusEffectComponent::AddStatusEffectTimed(const FStatusEffectTimedRequest& StatusEffectTimedRequest)
 {
-	int StatusEffectIndex = ActiveTimedStatusEffects.AddUnique(FStatusEffectTimed(StatusEffectTimedRequest));
+	int StatusEffectIndex = ActiveTimedStatusEffects.AddUnique(FStatusEffectTimed(GetOwner(), StatusEffectTimedRequest));
 	ASSERT_RETURN(StatusEffectIndex != -1);
 
 	FStatusEffectTimed& TimedStatusEffect = ActiveTimedStatusEffects[StatusEffectIndex];
@@ -141,6 +141,8 @@ void UStatusEffectComponent::FStatusEffect::AddStack(EStatusEffectRequestType Re
 
 		StatusEffect = NewObject<UBaseStatusEffect>(GetTransientPackage(), StatusEffectClass);
 		ASSERT_RETURN(StatusEffect != nullptr);
+
+		StatusEffect->SetOwner(Owner);
 
 		StatusEffect->OnAdded();
 	}

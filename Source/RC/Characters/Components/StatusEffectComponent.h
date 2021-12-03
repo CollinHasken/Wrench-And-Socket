@@ -96,7 +96,7 @@ protected:
 	struct FStatusEffect
 	{
 		FStatusEffect() = default;
-		FStatusEffect(const FStatusEffectRequest& Request) : StatusEffectClass(Request.StatusEffectClass) {}
+		FStatusEffect(AActor* InOwner, const FStatusEffectRequest& Request) : Owner(InOwner), StatusEffectClass(Request.StatusEffectClass) {}
 
 		// Add a stack
 		void AddStack(EStatusEffectRequestType RequestType);
@@ -114,6 +114,9 @@ protected:
 			return StatusEffectClass == rhs;
 		}
 
+		// The owner of this status effect
+		AActor* Owner = nullptr;
+
 		// The actual status effect
 		class UBaseStatusEffect* StatusEffect = nullptr;
 
@@ -129,7 +132,7 @@ protected:
 	 */
 	struct FStatusEffectTimed : public FStatusEffect
 	{
-		FStatusEffectTimed(const FStatusEffectTimedRequest& Request) : FStatusEffect(Request) {};
+		FStatusEffectTimed(AActor* InOwner, const FStatusEffectTimedRequest& Request) : FStatusEffect(InOwner, Request) {};
 
 		// Add a stack with a given time before it expires
 		void AddTimedStack(float Time, EStatusEffectRequestType RequestType);

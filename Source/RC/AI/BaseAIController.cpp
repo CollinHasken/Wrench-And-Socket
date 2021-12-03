@@ -128,12 +128,15 @@ void ABaseAIController::AddStateTransition(const TStateTransitionMap& Transition
 		{
 			if ((NewFunctionTransitionPair.Value)->HasTransitionFunctions())
 			{
-				/*Need to somehow copy over the self and functions
-				maybe append the new change functions to the current, then make the new equal to the current or swap, then set the current equal to the new?
-				then can't be const*/
+				// If there are transition functions, we need to set the transition equal to the new one
+				// We need to first preserve and combine the transition map
 				TNewStateChangeFunctionMap CombinedMap = (*CurrentFunctionTransition)->StateChangeMap;
 				CombinedMap.Append(NewFunctionTransitionPair.Value->StateChangeMap);
+
+				// Override the old functions
 				(*CurrentFunctionTransition) = NewFunctionTransitionPair.Value;
+
+				// Set the state change map to the combined
 				(*CurrentFunctionTransition)->StateChangeMap = CombinedMap;
 			}
 			else
@@ -157,7 +160,7 @@ void ABaseAIController::SetupStateTransitions()
 	 * Example map adding
 	 * TNewStateChangeFunctionMap ChaseMap;
 	 * ChaseMap.Emplace(EAIState::Patrol, new FStateChangePredicate<ABaseAIController>(this, &ABaseAIController::test1));
-	 * StateTransitions.Emplace(EAIState::Combat, new FStateTransition<ABaseAIController>(this, &ABaseAIController::UpdatePerceptionSight, CombatMap, &ABaseAIController::UpdatePerceptionSight));
+	 * StateTransitions.Emplace(EAIState::Combat, new FStateTransition<ABaseAIController>(this, &ABaseAIController::UpdatePerceptionSight, ChaseMap, &ABaseAIController::UpdatePerceptionSight));
 	 */
 	
 	// Have the sight perception configs get updated when going into/outof these states
@@ -184,6 +187,7 @@ void ABaseAIController::FinishStateChange()
 		(*OldStateTransition)->Exit();
 	}	
 
+	PreviousState = CurrentState;
 	CurrentState = RequestedState;
 	RequestedState = EAIState::NUM_STATES;
 
