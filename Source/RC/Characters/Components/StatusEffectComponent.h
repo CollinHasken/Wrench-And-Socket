@@ -104,6 +104,9 @@ protected:
 		// Remove a stack
 		void RemoveStack();
 
+		// Remove all stacks
+		void RemoveAllStacks();
+
 		bool operator==(const FStatusEffect& rhs) const
 		{
 			return StatusEffectClass == rhs.StatusEffectClass;

@@ -197,7 +197,7 @@ void ABaseWeapon::PerformAttack()
 	}
 
 	// If we don't attack from the montage, then attack
-	if (!WeaponInfo->AttackFromMontage)
+	if (!WeaponInfo->bAttackFromMontage)
 	{
 		WeaponComponent->Attack();
 	}

@@ -34,7 +34,7 @@ void UStatusEffectStun::OnAdded_Implementation()
 		ABaseAIController* EnemyController = Cast<ABaseAIController>(Character->GetController());
 		if (EnemyController != nullptr)
 		{
-			EnemyController->RequestState(EAIState::Stunned);
+			EnemyController->StunAI();
 		}
 	}
 
@@ -77,7 +77,7 @@ void UStatusEffectStun::OnRemoved_Implementation()
 		ABaseAIController* EnemyController = Cast<ABaseAIController>(Character->GetController());
 		if (EnemyController != nullptr)
 		{
-			EnemyController->RequestState(EnemyController->GetPreviousState());
+			EnemyController->UnstunAI();
 		}
 	}
 

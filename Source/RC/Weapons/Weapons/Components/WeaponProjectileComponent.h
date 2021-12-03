@@ -15,7 +15,7 @@ class RC_API UWeaponProjectileComponent : public UWeaponComponent
 	GENERATED_BODY()
 
 public:
-	void Init(const UWeaponInfo& WeaponInfo) override;
+	void Init(const UWeaponInfo& InWeaponInfo) override;
 
 	// Attack with the weapon
 	bool Attack() override;

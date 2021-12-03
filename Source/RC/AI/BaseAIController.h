@@ -134,8 +134,13 @@ public:
 	 */
 	EAIStateChangeResult RequestState(EAIState NewState);	
 
-	// Get the previous AI state
-	EAIState GetPreviousState() { return PreviousState; }
+	// Stun the AI, preventing further action and being placed in Stunned AI State
+	UFUNCTION(BlueprintCallable)
+	void StunAI();
+
+	// Unstun the AI, going back to the previous state
+	UFUNCTION(BlueprintCallable)
+	void UnstunAI();
 
 	// Message to send out for nodes waiting on state chagnes
 	static const FName AIMessage_StateChangeFinished;
@@ -217,6 +222,9 @@ private:
 
 	// Previous AI state
 	EAIState PreviousState = EAIState::NUM_STATES;
+
+	// Whether the AI is currently stunned and shouldn't change state
+	bool bStunned = false;
 
 	// All the state transition predicates
 	TStateTransitionMap StateTransitions;

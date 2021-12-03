@@ -18,7 +18,7 @@ class RC_API UWeaponRaycastComponent : public UWeaponComponent
 
 public:
 	// Initialize the weapon component
-	void Init(const UWeaponInfo& WeaponInfo) override;
+	void Init(const UWeaponInfo& InWeaponInfo) override;
 
 	// Attack with the weapon
 	bool Attack() override;

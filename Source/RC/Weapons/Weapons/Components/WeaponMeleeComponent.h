@@ -23,7 +23,7 @@ public:
 	using UWeaponComponent::Init;
 
 	// Initialize the weapon component
-	void Init(const UWeaponInfo& WeaponInfo, UCapsuleComponent& CapsuleComponent);
+	void Init(const UWeaponInfo& InWeaponInfo, UCapsuleComponent& CapsuleComponent);
 
 protected:
 	// Called when the anim notify state attack begins

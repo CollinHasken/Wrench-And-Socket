@@ -25,9 +25,9 @@ public:
 
 	/**
 	 * Setup weapon properties
-	 * @param BulletData	The data to init with
+	 * @param InBulletData	The data to init with
 	 */
-	void Init(const FBulletData& BulletData);
+	void Init(const FBulletData& InBulletData);
 
 	// Handle hit
 	UFUNCTION()
@@ -57,17 +57,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class ABaseBulletHitEffect> HitEffectClass;
 
-	// Damage to request on hit actor
-	int Damage = 0;
-
-	// Damage type
-	EDamageTypes DamageType = EDamageTypes::NORMAL;
-
-	// The character that shot this
-	TWeakObjectPtr<class ABaseCharacter> Shooter = nullptr;
-
-	// The weapon that shot this
-	TWeakObjectPtr<class ABaseWeapon> Weapon = nullptr;
+	// Bullet data
+	FBulletData BulletData;
 
 	// The Asset Id of the weapon that shot this
 	FPrimaryAssetId WeaponId = FPrimaryAssetId();

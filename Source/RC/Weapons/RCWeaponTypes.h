@@ -88,27 +88,6 @@ struct FDamageReceivedParams
 };
 
 /**
- * Data for the bullet
- */
-struct FBulletData
-{
-	// Damage to deal
-	int Damage = 0;
-
-	// Damage type
-	EDamageTypes DamageType = EDamageTypes::NORMAL;
-
-	// Direction to go in
-	FVector Direction = FVector::ZeroVector;
-
-	// Who shot us
-	TWeakObjectPtr<class ABaseCharacter> Shooter = nullptr;
-
-	// What shot us
-	TWeakObjectPtr<class ABaseWeapon> Weapon = nullptr;
-};
-
-/**
  * Config for every weapon
  */
 UCLASS(BlueprintType)
@@ -131,7 +110,7 @@ public:
 
 	// Whether the attack for the weapon component will be called form an anim notify from the attack montage
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Attack)
-	bool AttackFromMontage = false;
+	bool bAttackFromMontage = false;
 
 	// The cooldown after each attack
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
@@ -156,6 +135,18 @@ public:
 	// The socket that we'll attach this weapon to
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	FName SocketName = FName();
+
+	// Whether this weapon causes the hit character to have a status effect
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Status Effect")
+	bool bHasStatusEffect = false;
+
+	// Status effect to apply on hit
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Status Effect", meta = (AllowPrivateAccess = "true", EditCondition = "bHasStatusEffect", EditConditionHides))
+	TSubclassOf<class UBaseStatusEffect> TimedStatusEffectClass = NULL;
+
+	// Amount of time in seconds for the status effect to be applied for
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Status Effect", meta = (AllowPrivateAccess = "true", EditCondition = "bHasStatusEffect", EditConditionHides))
+	float TimedStatusEffectDuration = 0.0f;
 };
 
 /**
@@ -279,4 +270,34 @@ public:
 
 	// The currently loaded weapon
 	TWeakObjectPtr<class ABasePlayerWeapon> CurrentWeapon = nullptr;
+};
+
+/**
+ * Data for the bullet
+ */
+struct FBulletData
+{
+	FBulletData() = default;
+	FBulletData(const UWeaponInfo& WeaponInfo) : DamageType(WeaponInfo.DamageType), TimedStatusEffectClass(WeaponInfo.TimedStatusEffectClass), TimedStatusEffectDuration(WeaponInfo.TimedStatusEffectDuration) {}
+
+	// Damage to deal
+	int Damage = 0;
+
+	// Damage type
+	EDamageTypes DamageType = EDamageTypes::NORMAL;
+
+	// Status effect to apply on hit
+	TSubclassOf<class UBaseStatusEffect> TimedStatusEffectClass = NULL;
+
+	// Amount of time in seconds for the status effect to be applied for
+	float TimedStatusEffectDuration = 0.0f;
+
+	// Direction to go in
+	FVector Direction = FVector::ZeroVector;
+
+	// Who shot us
+	TWeakObjectPtr<class ABaseCharacter> Shooter = nullptr;
+
+	// What shot us
+	TWeakObjectPtr<class ABaseWeapon> Weapon = nullptr;
 };

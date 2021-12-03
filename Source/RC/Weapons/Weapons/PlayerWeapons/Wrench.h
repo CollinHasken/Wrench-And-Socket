@@ -42,8 +42,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	class UCapsuleComponent* HitTrigger;
 
+	// Mask to apply to prevent movement
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	class UInputMaskInfo* MeleeMask;
 
+	// To track when the mask has been applied
 	bool bMaskApplied = false;
 };

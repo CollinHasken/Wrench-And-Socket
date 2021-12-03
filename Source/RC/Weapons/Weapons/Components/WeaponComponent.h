@@ -20,7 +20,7 @@ class RC_API UWeaponComponent : public UActorComponent
 
 public:	
 	// Initialize the weapon component
-	virtual void Init(const UWeaponInfo& WeaponInfo);
+	virtual void Init(const UWeaponInfo& InWeaponInfo);
 
 	/**
 	 * Set the new wielder for this weapon
@@ -70,8 +70,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	int Range;
 
-	// Damage type
-	EDamageTypes DamageType = EDamageTypes::NORMAL;
+	// The weapon info from the weapon
+	const class UWeaponInfo* WeaponInfo;
 
 	// Wielder of this weapon
 	class ABaseCharacter* Wielder = nullptr;

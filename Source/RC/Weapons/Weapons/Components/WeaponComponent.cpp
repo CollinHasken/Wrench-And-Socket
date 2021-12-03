@@ -6,12 +6,12 @@
 #include "RC/Characters/BaseCharacter.h"
 
 // Initialize the weapon component
-void UWeaponComponent::Init(const UWeaponInfo& WeaponInfo)
+void UWeaponComponent::Init(const UWeaponInfo& InWeaponInfo)
 {
-	SetDamage(WeaponInfo.BaseDamage);
-	SetRange(WeaponInfo.BaseRange);
-	DamageType = WeaponInfo.DamageType;
-	WeaponInfoId = WeaponInfo.GetPrimaryAssetId();
+	WeaponInfo = &InWeaponInfo;
+	SetDamage(WeaponInfo->BaseDamage);
+	SetRange(WeaponInfo->BaseRange);
+	WeaponInfoId = WeaponInfo->GetPrimaryAssetId();
 }
 
 // Set the new wielder for this weapon

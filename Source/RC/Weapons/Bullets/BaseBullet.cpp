@@ -6,6 +6,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 
 #include "RC/Characters/BaseCharacter.h"
+#include "RC/Characters/Components/StatusEffectComponent.h"
 #include "RC/Debug/Debug.h"
 #include "RC/Framework/DamageInterface.h"
 #include "RC/Weapons/Bullets/BaseBulletHitEffect.h"
@@ -63,13 +64,10 @@ void ABaseBullet::PostInitializeComponents()
 }
 
 // Setup weapon properties
-void ABaseBullet::Init(const FBulletData& BulletData)
+void ABaseBullet::Init(const FBulletData& InBulletData)
 {
-	Damage = BulletData.Damage;
-	DamageType = BulletData.DamageType;
-	Shooter = BulletData.Shooter;
-	Weapon = BulletData.Weapon;
-	ABaseWeapon* WeaponObj = Weapon.Get();
+	BulletData = InBulletData;
+	ABaseWeapon* WeaponObj = BulletData.Weapon.Get();
 	if (WeaponObj != nullptr)
 	{
 		WeaponId = WeaponObj->GetInfoId();
@@ -92,14 +90,25 @@ void ABaseBullet::OnImpact(const FHitResult& HitResult)
 		{
 			// Request damage on hit
 			FDamageRequestParams DamageParams;
-			DamageParams.bFromPlayer = URCStatics::IsActorPlayer(Shooter.Get());
-			DamageParams.Damage = Damage;
-			DamageParams.DamageType = DamageType;
-			DamageParams.Instigator = Shooter;
+			DamageParams.bFromPlayer = URCStatics::IsActorPlayer(BulletData.Shooter.Get());
+			DamageParams.Damage = BulletData.Damage;
+			DamageParams.DamageType = BulletData.DamageType;
+			DamageParams.Instigator = BulletData.Shooter;
 			DamageParams.CauseId = WeaponId;
 			DamageParams.HitLocation = HitResult.ImpactPoint;
 			DamageParams.HitNormal = HitResult.Normal;
 			DamageableActor->RequestDamage(DamageParams);
+		}
+
+		// Give status effect
+		if (BulletData.TimedStatusEffectClass != NULL)
+		{
+			UStatusEffectComponent* StatusEffectComponent = HitActor->FindComponentByClass<UStatusEffectComponent>();
+			if (StatusEffectComponent != nullptr)
+			{
+				FStatusEffectTimedRequest TimedRequest(BulletData.TimedStatusEffectClass, BulletData.TimedStatusEffectDuration);
+				StatusEffectComponent->AddStatusEffectTimed(TimedRequest);
+			}
 		}
 	}
 

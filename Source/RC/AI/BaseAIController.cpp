@@ -66,6 +66,12 @@ void ABaseAIController::OnPossess(APawn* const PossessedPawn)
 // Request the AI to change to a different state
 EAIStateChangeResult ABaseAIController::RequestState(EAIState NewState)
 {
+	// Can't change states while stunned
+	if (bStunned)
+	{
+		return EAIStateChangeResult::Failed;
+	}
+
 	if (NewState == CurrentState)
 	{
 		return EAIStateChangeResult::Succeeded;
@@ -104,6 +110,20 @@ EAIStateChangeResult ABaseAIController::RequestState(EAIState NewState)
 	RequestedState = NewState;
 	FinishStateChange();
 	return EAIStateChangeResult::Succeeded;
+}
+
+// Stun the AI, preventing further action and being placed in Stunned AI State
+void ABaseAIController::StunAI()
+{
+	RequestState(EAIState::Stunned);
+	bStunned = true;
+}
+
+// Unstun the AI, going back to the previous state
+void ABaseAIController::UnstunAI()
+{
+	bStunned = false;
+	RequestState(PreviousState);
 }
 
 // Return the blackboard asset

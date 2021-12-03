@@ -2,14 +2,15 @@
 #include "WeaponMeleeComponent.h"
 
 #include "RC/Characters/BaseCharacter.h"
+#include "RC/Characters/Components/StatusEffectComponent.h"
 #include "RC/Debug/Debug.h"
 #include "RC/Framework/DamageInterface.h"
 #include "RC/Util/RCStatics.h"
 
 // Initialize the weapon component
-void UWeaponMeleeComponent::Init(const UWeaponInfo& WeaponInfo, UCapsuleComponent& CapsuleComponent)
+void UWeaponMeleeComponent::Init(const UWeaponInfo& InWeaponInfo, UCapsuleComponent& CapsuleComponent)
 {
-	Super::Init(WeaponInfo);
+	Super::Init(InWeaponInfo);
 
 	Capsule = &CapsuleComponent;
 	Capsule->OnComponentBeginOverlap.AddDynamic(this, &UWeaponMeleeComponent::OnWeaponTriggerOverlap);
@@ -43,11 +44,22 @@ void UWeaponMeleeComponent::OnWeaponTriggerOverlap(UPrimitiveComponent*, AActor*
 		FDamageRequestParams DamageParams;
 		DamageParams.bFromPlayer = URCStatics::IsActorPlayer(Wielder);
 		DamageParams.Damage = Damage;
-		DamageParams.DamageType = DamageType;
+		DamageParams.DamageType = WeaponInfo->DamageType;
 		DamageParams.Instigator = Wielder;
 		DamageParams.CauseId = WeaponInfoId;
 		DamageParams.HitLocation = HitResult.ImpactPoint;
 		DamageParams.HitNormal = HitResult.Normal;
 		DamageableActor->RequestDamage(DamageParams);
-	}
+
+		// Give status effect
+		if (WeaponInfo->TimedStatusEffectClass != NULL)
+		{
+			UStatusEffectComponent* StatusEffectComponent = OtherActor->FindComponentByClass<UStatusEffectComponent>();
+			if (StatusEffectComponent != nullptr)
+			{
+				FStatusEffectTimedRequest TimedRequest(WeaponInfo->TimedStatusEffectClass, WeaponInfo->TimedStatusEffectDuration);
+				StatusEffectComponent->AddStatusEffectTimed(TimedRequest);
+			}
+		}
+	}	
 }

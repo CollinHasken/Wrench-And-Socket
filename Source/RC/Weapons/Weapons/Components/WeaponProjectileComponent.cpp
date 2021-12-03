@@ -11,11 +11,11 @@
 #include "RC/Weapons/Bullets/BaseBullet.h"
 #include "RC/Weapons/Weapons/BaseWeapon.h"
 
-void UWeaponProjectileComponent::Init(const UWeaponInfo& WeaponInfo)
+void UWeaponProjectileComponent::Init(const UWeaponInfo& InWeaponInfo)
 {
-	Super::Init(WeaponInfo);
+	Super::Init(InWeaponInfo);
 
-	Accuracy = WeaponInfo.BaseAccuracy;
+	Accuracy = InWeaponInfo.BaseAccuracy;
 
 	// Save off socket
 	const ABaseWeapon* Owner = GetOwner<ABaseWeapon>();
@@ -103,7 +103,7 @@ bool UWeaponProjectileComponent::ShootAtTarget(const FVector& TargetLocation)
 	}
 
 	// Initialize bullet to send it off
-	FBulletData BulletData;
+	FBulletData BulletData(*WeaponInfo);
 	BulletData.Damage = GetDamage();
 	BulletData.Direction = Trajectory;
 	BulletData.Shooter = Wielder;

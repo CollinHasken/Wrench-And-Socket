@@ -19,7 +19,7 @@ void UStatusEffectComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	{
 		if (ActiveTimedStatusEffects[StatusEffectIndex].ExpireTime.Elapsed())
 		{
-			ActiveTimedStatusEffects[StatusEffectIndex].RemoveStack();
+			ActiveTimedStatusEffects[StatusEffectIndex].RemoveAllStacks();
 			ActiveTimedStatusEffects.RemoveAtSwap(StatusEffectIndex);
 		}
 	}
@@ -169,6 +169,24 @@ void UStatusEffectComponent::FStatusEffect::RemoveStack()
 	{
 		StatusEffect->OnRemoved();
 	}
+}
+
+// Remove all stacks
+void UStatusEffectComponent::FStatusEffect::RemoveAllStacks()
+{
+	// No stacks to remove
+	if (Stacks <= 0)
+	{
+		return;
+	}
+
+	for (int Stack = 0; Stack < Stacks; ++Stack)
+	{
+		StatusEffect->OnStackRemoved();
+	}
+
+	Stacks = 0;
+	StatusEffect->OnRemoved();
 }
 
 // Add a stack with a given time before it expires

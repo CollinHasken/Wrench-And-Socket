@@ -5,6 +5,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 
+#include "RC/Characters/Components/StatusEffectComponent.h"
 #include "RC/Characters/Player/RCCharacter.h"
 #include "RC/Debug/Debug.h"
 #include "RC/Util/RCStatics.h"
@@ -13,9 +14,9 @@
 #include "RC/Weapons/Weapons/BaseWeapon.h"
 
 // Initialize the weapon component
-void UWeaponRaycastComponent::Init(const UWeaponInfo& WeaponInfo)
+void UWeaponRaycastComponent::Init(const UWeaponInfo& InWeaponInfo)
 {
-	Super::Init(WeaponInfo);
+	Super::Init(InWeaponInfo);
 
 	// Save off socket
 	const ABaseWeapon* Owner = GetOwner<ABaseWeapon>();
@@ -130,7 +131,7 @@ bool UWeaponRaycastComponent::ShootTowardsTarget(const FVector& TargetDirection)
 	FDamageRequestParams DamageParams;
 	DamageParams.bFromPlayer = URCStatics::IsActorPlayer(Wielder);
 	DamageParams.Damage = GetDamage();
-	DamageParams.DamageType = DamageType;
+	DamageParams.DamageType = WeaponInfo->DamageType;
 	DamageParams.Instigator = Wielder;
 	DamageParams.CauseId = WeaponInfoId;
 
@@ -173,6 +174,17 @@ bool UWeaponRaycastComponent::ShootTowardsTarget(const FVector& TargetDirection)
 			DamageParams.HitLocation = Hit.ImpactPoint;
 			DamageParams.HitNormal = Hit.Normal;
 			DamageableActor->RequestDamage(DamageParams);
+
+			// Give status effect
+			if (WeaponInfo->TimedStatusEffectClass != NULL)
+			{
+				UStatusEffectComponent* StatusEffectComponent = HitActor->FindComponentByClass<UStatusEffectComponent>();
+				if (StatusEffectComponent != nullptr)
+				{
+					FStatusEffectTimedRequest TimedRequest(WeaponInfo->TimedStatusEffectClass, WeaponInfo->TimedStatusEffectDuration);
+					StatusEffectComponent->AddStatusEffectTimed(TimedRequest);
+				}
+			}
 
 			// Store that we damaged this actor
 			HitActors.Add(HitActor);
