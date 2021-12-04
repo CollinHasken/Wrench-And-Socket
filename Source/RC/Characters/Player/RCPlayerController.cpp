@@ -96,6 +96,46 @@ void ARCPlayerController::OpenWeaponSelect(bool Open/* = true*/)
 	}
 }
 
+// Open or close the pause settings widget
+void ARCPlayerController::OpenPauseSettings(bool Open/* = true*/)
+{
+	APlayerHUD* PlayerHUD = GetHUD<APlayerHUD>();
+	ASSERT_RETURN(PlayerHUD != nullptr);
+
+	ARCCharacter* RCPlayer = Cast<ARCCharacter>(GetCharacter());
+	if (Open)
+	{
+		ASSERT_RETURN(RCPlayer != nullptr);
+
+		// Enable UI input
+		BindPauseSettings();
+		PushInputComponent(UIInputComponent);
+		RCPlayer->DisableInput(this);
+
+		SetPause(true);
+
+		PlayerHUD->ShowPauseSettings();
+	}
+	else
+	{
+		// Disable UI input
+		UnbindAll();
+		PopInputComponent(UIInputComponent);
+		SetPause(false);
+
+		PlayerHUD->HidePauseSettings();
+
+		if (RCPlayer != nullptr)
+		{
+			RCPlayer->EnableInput(this);
+		}
+		else
+		{
+			LOG_CHECK(RCPlayer != nullptr, LogUI, Error, "No character when opening weapon select")
+		}
+	}
+}
+
 // Called via input to close the weapon wheel
 void ARCPlayerController::CloseWeaponSelect()
 {
@@ -108,7 +148,9 @@ void ARCPlayerController::ClosePauseHUD()
 
 // Called via input to close the pause settings
 void ARCPlayerController::ClosePauseSettings()
-{}
+{
+	OpenPauseSettings(false);
+}
 
 // Called each frame to move the weapon selection based on the current input
 void ARCPlayerController::ConsumeWeaponSelect(FVector2D& Direction)
@@ -200,13 +242,13 @@ void ARCPlayerController::BindWeaponSelectInputs()
 // Bind the inputs for the pause HUD
 void ARCPlayerController::BindPauseHUD()
 {
-	BindPausedAction("OpenPauseHUD", IE_Released, &ARCPlayerController::ClosePauseHUD);
+	BindPausedAction("OpenPauseHUD", IE_Pressed, &ARCPlayerController::ClosePauseHUD);
 }
 
 // Bind the inputs for pause settings
 void ARCPlayerController::BindPauseSettings()
 {
-	BindPausedAction("OpenPauseSettings", IE_Released, &ARCPlayerController::ClosePauseSettings);
+	BindPausedAction("OpenPauseSettings", IE_Pressed, &ARCPlayerController::ClosePauseSettings);
 }
 
 // Unbind all

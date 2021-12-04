@@ -371,7 +371,12 @@ void ARCCharacter::OpenPauseHUD()
 
 // Called via input to open the pause settings
 void ARCCharacter::OpenPauseSettings()
-{}
+{
+	ARCPlayerController* PlayerController = Cast<ARCPlayerController>(GetController());
+	ASSERT_RETURN(PlayerController != nullptr);
+
+	PlayerController->OpenPauseSettings();
+}
 
 // Called when a weapon is equipped
 void ARCCharacter::OnWeaponEquipped(ABasePlayerWeapon* Weapon, EInventorySlot Slot)

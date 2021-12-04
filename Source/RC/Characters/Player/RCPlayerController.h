@@ -31,6 +31,13 @@ public:
 	 */
 	void OpenWeaponSelect(bool Open = true);
 
+	/**
+	 * Open or close the pause setting widget
+	 * @param Open Whether to open or close
+	 */
+	UFUNCTION(BlueprintCallable)
+	void OpenPauseSettings(bool Open = true);
+
 	UFUNCTION(BlueprintPure)
 	class UMaskableInputComponent* GetMaskableInput() const { return MaskableInput; }
 

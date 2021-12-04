@@ -30,6 +30,7 @@ protected:
 	UParticleSystem* ExplosionFX;
 
 	// The spawned FX
+	UPROPERTY()
 	UParticleSystemComponent* SpawnedFX;
 
 	// Lifetime of effect in seconds
