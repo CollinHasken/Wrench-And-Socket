@@ -27,11 +27,8 @@ public:
 	 */
 	void RequestDamage(FDamageRequestParams& Params) override;
 
-	/**
-	 *	Sets the actor to be hidden in the game
-	 *	@param	bNewHidden	Whether or not to hide the actor and all its components
-	 */
-	void SetActorHiddenInGame(bool bNewHidden) override;
+	// The destructible only saves itself once destroyed
+	bool ActorNeedsSaving_Implementation() override { return false; }
 
 	/** Returns Destructible subobject **/
 	FORCEINLINE class UDestructibleComponent* GetDestructible() const { return Destructible; }

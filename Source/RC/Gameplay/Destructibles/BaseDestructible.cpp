@@ -42,14 +42,3 @@ void ABaseDestructible::RequestDamage(FDamageRequestParams& Params)
 	 */
 	Destructible->ApplyHit();
 }
-
-// Sets the actor to be hidden in the game
-void ABaseDestructible::SetActorHiddenInGame(bool bNewHidden)
-{
-	Super::SetActorHiddenInGame(bNewHidden);
-
-	if (Mesh != nullptr)
-	{
-		Mesh->SetSimulatePhysics(false);
-	}
-}

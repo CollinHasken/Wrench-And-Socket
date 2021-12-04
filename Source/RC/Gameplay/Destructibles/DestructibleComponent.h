@@ -20,9 +20,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplyHit();
 
-	// Whether this destructible has been destroyed
-	bool IsDestroyed() const { return bIsDestroyed; }
-
 protected:
 	void BeginPlay() override;
 
@@ -30,11 +27,7 @@ private:
 	// Destroy this destructible
 	void Destroy();
 
-	// Hide owner
-	void HideOwner();
-
 	// Whether this destructible has been destroyed
-	UPROPERTY(BlueprintReadOnly, Category = Destructible, meta = (AllowPrivateAccess = "true"))
 	bool bIsDestroyed = false;
 
 	// The max health

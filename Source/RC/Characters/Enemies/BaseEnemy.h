@@ -3,15 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "RC/Characters/BaseCharacter.h"
+
 #include "RC/AI/SplineFollowerComponent.h"
+#include "RC/Characters/BaseCharacter.h"
+#include "RC/Save/SaveGameInterface.h"
+
 #include "BaseEnemy.generated.h"
 
 /**
  * Base enemy with AI and spline following
  */
 UCLASS(Abstract, Blueprintable)
-class RC_API ABaseEnemy : public ABaseCharacter
+class RC_API ABaseEnemy : public ABaseCharacter, public ISaveGameInterface
 {
 	GENERATED_BODY()
 
@@ -26,6 +29,9 @@ public:
 
 	// Get the currently equipped weapon
 	class ABaseWeapon* GetEquippedWeapon() const override;
+
+	// The enemy only saves itself once destroyed
+	bool ActorNeedsSaving_Implementation() override { return false; }
 
 protected:
 	// Called when the game starts or when spawned

@@ -10,7 +10,7 @@
 void URCSaveGame::SaveActor(AActor* Actor)
 {
 	FActorSaveData ActorData;
-	ActorData.ActorPath = FSoftObjectPath(Actor);
+	ActorData.ActorName = Actor->GetFName();
 
 	// Pass the array to fill with data from Actor
 	FMemoryWriter MemWriter(ActorData.ByteData);
@@ -25,8 +25,6 @@ void URCSaveGame::SaveActor(AActor* Actor)
 // Save the player's data
 void URCLevelTransitionSave::SavePlayer(ARCCharacter* Player)
 {
-	SavedPlayer.ActorPath = FSoftObjectPath(Player);
-
 	// Pass the array to fill with data from Actor
 	FMemoryWriter MemWriter(SavedPlayer.ByteData);
 	FSaveGameArchive Ar(MemWriter, true);

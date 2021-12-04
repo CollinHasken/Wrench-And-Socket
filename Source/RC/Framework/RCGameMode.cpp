@@ -30,6 +30,10 @@ void ARCGameMode::InitGame(const FString& MapName, const FString& Options, FStri
 	{
 		LoadLevelTransitionData();
 	}
+	else
+	{
+		InitializeLevelTransitionData();
+	}
 }
 
 // Called when a new player is spawned
@@ -89,8 +93,12 @@ void ARCGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewP
 // Save the persistent data for a level transition
 bool ARCGameMode::SaveLevelTransitionDataToMemory(TArray<uint8>* Data)
 {
-	URCLevelTransitionSave* LevelTransitionSave = Cast<URCLevelTransitionSave>(UGameplayStatics::CreateSaveGameObject(URCLevelTransitionSave::StaticClass()));
-	ASSERT_RETURN_VALUE(LevelTransitionSave != nullptr, false);
+	if (CurrentSave == nullptr)
+	{
+		LOG_CHECK(CurrentSave != nullptr, LogSave, Error, "No current save. This should've been created when the level was loaded");
+		CurrentSave = Cast<URCLevelTransitionSave>(UGameplayStatics::CreateSaveGameObject(URCLevelTransitionSave::StaticClass()));
+	}
+	ASSERT_RETURN_VALUE(CurrentSave != nullptr, false);
 
 	ASSERT_RETURN_VALUE(GameState != nullptr, false);
 	ASSERT_RETURN_VALUE(GameState->PlayerArray.Num() == 1, false);
@@ -99,7 +107,7 @@ bool ARCGameMode::SaveLevelTransitionDataToMemory(TArray<uint8>* Data)
 	ASSERT_RETURN_VALUE(PlayerState != nullptr, false);
 
 	// Save off the player's data
-	PlayerState->SaveForLevelTransition(LevelTransitionSave);
+	PlayerState->SaveForLevelTransition(CurrentSave);
 
 	// Iterate the entire world of actors
 	for (FActorIterator It(GetWorld()); It; ++It)
@@ -116,13 +124,44 @@ bool ARCGameMode::SaveLevelTransitionDataToMemory(TArray<uint8>* Data)
 			continue;
 		}
 
-		LevelTransitionSave->SaveActor(Actor);
+		// Does this actor need to be saved
+		if (!ISaveGameInterface::Execute_ActorNeedsSaving(Actor))
+		{
+			continue;
+		}
+
+		CurrentSave->SaveActor(Actor);
 	}
 
 	// Put savegame into data array
-	UGameplayStatics::SaveGameToMemory(LevelTransitionSave, *Data);
-	UGameplayStatics::SaveGameToSlot(LevelTransitionSave, "Test", 0);
+	UGameplayStatics::SaveGameToMemory(CurrentSave, *Data);
+	UGameplayStatics::SaveGameToSlot(CurrentSave, "Test", 0);
 	return true;
+}
+
+// Save the given actor to the current save
+void ARCGameMode::SaveActorForLevelTransition(AActor* Actor)
+{
+	if (Actor->IsPendingKill())
+	{
+		return;
+	}
+
+	// Only interested in saveable actors
+	if (!Actor->GetClass()->ImplementsInterface(USaveGameInterface::StaticClass()))
+	{
+		return;
+	}
+
+	ASSERT_RETURN(CurrentSave != nullptr);
+	CurrentSave->SaveActor(Actor);
+}
+
+// Create a new save data for the current level
+void ARCGameMode::InitializeLevelTransitionData()
+{
+	CurrentSave = Cast<URCLevelTransitionSave>(UGameplayStatics::CreateSaveGameObject(URCLevelTransitionSave::StaticClass()));
+	ASSERT(CurrentSave != nullptr);
 }
 
 void ARCGameMode::LoadLevelTransitionData()
@@ -131,29 +170,35 @@ void ARCGameMode::LoadLevelTransitionData()
 	{
 		CurrentSave = Cast<URCLevelTransitionSave>(UGameplayStatics::LoadGameFromSlot("Test", 0));
 		LOG_RETURN(CurrentSave != nullptr, LogSave, Error, "Failed to load SaveGame Data.");
-
-		UAssetManager& AssetManager = UAssetManager::Get();
-		FAssetData ActorData;
+		
 		for (FActorSaveData ActorSaveData : CurrentSave->SavedActors)
 		{
-			AssetManager.GetAssetDataForPath(ActorSaveData.ActorPath, ActorData);
-			if (!ActorData.IsAssetLoaded())
+			// Find the actor with this name
+			AActor* FoundActor = nullptr;
+			for (FActorIterator It(GetWorld()); It; ++It)
 			{
-				continue;
+				AActor* Actor = *It;
+				if (Actor != nullptr && Actor->GetFName() == ActorSaveData.ActorName)
+				{
+					FoundActor = Actor;
+					break;
+				}
 			}
-
-			AActor* Actor = Cast<AActor>(ActorData.GetAsset());
-			ASSERT_CONTINUE(Actor != nullptr);
+			LOG_CONTINUE(FoundActor != nullptr, LogSave, Error, "Unable to find actor for %s", *ActorSaveData.ActorName.ToString());
 
 			FMemoryReader MemReader(ActorSaveData.ByteData);
 
 			FObjectAndNameAsStringProxyArchive Ar(MemReader, true);
 			Ar.ArIsSaveGame = true;
 			// Convert binary array back into actor's variables
-			Actor->Serialize(Ar);
+			FoundActor->Serialize(Ar);
 
 			//ISGameplayInterface::Execute_OnActorLoaded(Actor);
 		}
+	}
+	else
+	{
+		InitializeLevelTransitionData();
 	}
 }
 

@@ -37,7 +37,9 @@ public:
 	 */
 	bool SaveLevelTransitionDataToMemory(TArray<uint8>* Data);
 
-	void LoadLevelTransitionData();
+	// Save the given actor to the current save
+	// Useful for when theres data to save for an actor that's being deleted
+	void SaveActorForLevelTransition(AActor* Actor);
 
 protected:
 	/**
@@ -47,6 +49,13 @@ protected:
 	UFUNCTION()
 	void OnPlayerDied(AActor* Player);
 
+	// Create a new save data for the current level
+	void InitializeLevelTransitionData();
+
+	// Load the data we saved for transitioning between or reseting levels
+	void LoadLevelTransitionData();
+
 	// Current save
+	UPROPERTY()
 	class URCLevelTransitionSave* CurrentSave = nullptr;
 };

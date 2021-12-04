@@ -19,7 +19,7 @@ struct FActorSaveData
 public:
 	// Identifier for which Actor this belongs to
 	UPROPERTY()
-	FSoftObjectPath ActorPath;
+	FName ActorName;
 
 	// Contains all SaveGame marked variables of the Actor
 	UPROPERTY()

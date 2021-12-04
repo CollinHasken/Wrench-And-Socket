@@ -3,9 +3,12 @@
 
 #include "AIController.h"
 #include "BrainComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "RC/AI/SplineFollowerComponent.h"
+#include "RC/Characters/Components/HealthComponent.h"
 #include "RC/Debug/Debug.h"
+#include "RC/Framework/RCGameMode.h"
 #include "RC/Weapons/Weapons/EnemyWeapons/BaseEnemyWeapon.h"
 
 // Sets default values
@@ -21,6 +24,13 @@ void ABaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// If we load dead, destroy ourselves
+	if (GetHealth() != nullptr && GetHealth()->IsDead())
+	{
+		Destroy();
+		return;
+	}
+
 	SetupWeapon();
 }
 
@@ -28,7 +38,10 @@ void ABaseEnemy::BeginPlay()
 void ABaseEnemy::EndPlay(const EEndPlayReason::Type)
 {
 	// Destroy weapon with us
-	Weapon->Destroy();
+	if (Weapon != nullptr)
+	{
+		Weapon->Destroy();
+	}
 }
 
 ABaseWeapon* ABaseEnemy::GetEquippedWeapon() const
@@ -58,6 +71,17 @@ void ABaseEnemy::OnActorDied(AActor* Actor)
 		{
 			Brain->StopLogic("Died");
 		}
+	}
+
+	// Save that this enemy has died
+	ARCGameMode* GameMode = Cast<ARCGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (GameMode != nullptr)
+	{
+		GameMode->SaveActorForLevelTransition(this);
+	}
+	else
+	{
+		ASSERT(GameMode != nullptr);
 	}
 }
 

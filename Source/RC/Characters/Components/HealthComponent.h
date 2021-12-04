@@ -68,7 +68,7 @@ private:
 	int CurrentHealth = 100;
 
 	// Whether they're dead
-	UPROPERTY(BlueprintReadOnly, Category = Health, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = Health, SaveGame, meta = (AllowPrivateAccess = "true"))
 	bool bIsDead = false;
 
 	// Broadcasts when the actor this component is on its health changed
