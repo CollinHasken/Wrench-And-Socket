@@ -13,10 +13,12 @@
 #include "Perception/AISense_Sight.h"
 
 #include "RC/Debug/Debug.h"
-#include "RC/Characters/Player/RCPlayerController.h"
 #include "RC/Characters/Components/InventoryComponent.h"
+#include "RC/Characters/Components/MaskableInputComponent.h"
+#include "RC/Characters/Player/RCPlayerController.h"
 #include "RC/Characters/Player/RCPlayerState.h"
 #include "RC/Collectibles/Collectible.h"
+#include "RC/Gameplay/MovingTeleporter.h"
 #include "RC/Util/DataSingleton.h"
 #include "RC/Util/RCStatics.h"
 #include "RC/Weapons/Weapons/PlayerWeapons/BasePlayerWeapon.h"
@@ -161,7 +163,7 @@ void ARCCharacter::Tick(float DeltaTime)
 	// Open weapon wheel if it's been held long enough
 	if (WeaponSelectTimer.Elapsed())
 	{
-		ARCPlayerController* PlayerController = Cast<ARCPlayerController>(GetController());
+		ARCPlayerController* PlayerController = GetController<ARCPlayerController>();
 		ASSERT_RETURN(PlayerController != nullptr);
 		PlayerController->OpenWeaponSelect();
 
@@ -215,6 +217,9 @@ void ARCCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAxis("Attack", this, &ARCCharacter::Attack);	
 	PlayerInputComponent->BindAction("NextWeapon", IE_Pressed, this, &ARCCharacter::EquipNextWeapon);
 	PlayerInputComponent->BindAction("PreviousWeapon", IE_Pressed, this, &ARCCharacter::EquipPreviousWeapon);
+
+	// Misc
+	PlayerInputComponent->BindAction("Teleporter", IE_Pressed, this, &ARCCharacter::ActivateTeleporter);
 
 	// UI
 	PlayerInputComponent->BindAction("SelectWeapon", IE_Pressed, this, &ARCCharacter::SelectWeapon);
@@ -365,6 +370,76 @@ void ARCCharacter::SelectWeaponEnd()
 	WeaponSelectTimer.Invalidate();
 }
 
+// Try to activate a teleporter
+void ARCCharacter::ActivateTeleporter()
+{
+	UWorld* World = GetWorld();
+	ASSERT_RETURN(World != nullptr);
+
+	UTeleporterSubsystem* TeleporterSystem = World->GetSubsystem<UTeleporterSubsystem>();
+	ASSERT_RETURN(TeleporterSystem != nullptr);
+
+	// If we can't activate one, do nothing
+	if (!TeleporterSystem->ActivateBestTeleporter())
+	{
+		return;
+	}
+
+	// Listen for when the teleport has finished
+	TeleporterSystem->OnTeleportFinished().BindUObject(this, &ARCCharacter::OnTeleporterFinished);
+
+	ARCPlayerController* PlayerController = GetController<ARCPlayerController>();
+	ASSERT_RETURN(PlayerController != nullptr);
+
+	UMaskableInputComponent* MaskableInput = PlayerController->GetMaskableInput();
+	ASSERT_RETURN(MaskableInput != nullptr);
+
+	// Remove controls
+	MaskableInput->PushMask(StunMask, "ARCCharacter::ActivateTeleporter");
+
+	// Switch to custom teleporter movement to prevent gravity and other forces
+	UCharacterMovementComponent* Movement = Cast<UCharacterMovementComponent>(GetMovementComponent());
+	ASSERT_RETURN(Movement != nullptr);
+
+	CurrentCustomMovementMode = ECustomMovementModes::MOVE_Teleporting;
+
+	Movement->StopMovementImmediately();
+	Movement->SetMovementMode(EMovementMode::MOVE_Custom, static_cast<uint8>(CurrentCustomMovementMode));
+}
+
+// Called via Teleporter Subsystem callback once the teleporter is finished
+void ARCCharacter::OnTeleporterFinished()
+{
+	// No longer listen
+	UWorld* World = GetWorld();
+	if (World != nullptr)
+	{
+		UTeleporterSubsystem* TeleporterSystem = World->GetSubsystem<UTeleporterSubsystem>();
+		if (TeleporterSystem != nullptr)
+		{
+			TeleporterSystem->OnTeleportFinished().Unbind();
+		}
+	}
+
+	// Remove the mask
+	ARCPlayerController* PlayerController = GetController<ARCPlayerController>();
+	if (PlayerController != nullptr)
+	{
+		UMaskableInputComponent* MaskableInput = PlayerController->GetMaskableInput();
+		ASSERT_RETURN(MaskableInput != nullptr);
+
+		MaskableInput->PopMask(StunMask, "ARCCharacter::ActivateTeleporter");
+	}
+
+	// Go back to normal controls
+	CurrentCustomMovementMode = ECustomMovementModes::MOVE_None;	
+	UCharacterMovementComponent* Movement = Cast<UCharacterMovementComponent>(GetMovementComponent());
+	if (Movement != nullptr)
+	{
+		Movement->SetMovementMode(EMovementMode::MOVE_Walking);
+	}
+}
+
 // Called via input to open the pause HUD
 void ARCCharacter::OpenPauseHUD()
 {}
@@ -372,7 +447,7 @@ void ARCCharacter::OpenPauseHUD()
 // Called via input to open the pause settings
 void ARCCharacter::OpenPauseSettings()
 {
-	ARCPlayerController* PlayerController = Cast<ARCPlayerController>(GetController());
+	ARCPlayerController* PlayerController = GetController<ARCPlayerController>();
 	ASSERT_RETURN(PlayerController != nullptr);
 
 	PlayerController->OpenPauseSettings();

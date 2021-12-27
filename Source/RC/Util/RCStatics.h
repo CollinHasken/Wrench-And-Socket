@@ -66,6 +66,14 @@ public:
 	static class ARCPlayerState* GetPlayerState(const UObject* WorldContextObject);
 
 	/**
+	 * Keep the camera in place
+	 * @param WorldContextObject World context
+	 * @param Lock Whether to lock it or attach it back to the player
+	 */
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static void LockCamera(const UObject* WorldContextObject, bool bLock);
+
+	/**
 	 * Get the primary asset
 	 * @param AssetId The ID of the asset to retrieve
 	 * @Return The primary asset
@@ -83,6 +91,7 @@ public:
 	const static float TriggerStatusFullMin;
 
 	// Physics profiles
+	static const FName Trigger_ProfileName;
 	static const FName BlockAllButPlayer_ProfileName;
 	static const FName Collectible_ProfileName;
 	static const FName CollectiblePre_ProfileName;

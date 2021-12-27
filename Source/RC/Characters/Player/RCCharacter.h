@@ -11,6 +11,16 @@
 #include "RCCharacter.generated.h"
 
 /**
+ * Custom movement modes
+ */
+UENUM(BlueprintType)
+enum class ECustomMovementModes : uint8
+{
+	MOVE_None			UMETA(DisplayName = "None"),
+	MOVE_Teleporting	UMETA(DisplayName = "Teleporting"),
+};
+
+/**
  * The player
  */
 UCLASS(config=Game)
@@ -27,6 +37,10 @@ public:
 
 	// Called each frame
 	virtual void Tick(float DeltaTime) override;
+
+	// Returns whether the player is currently teleporting
+	UFUNCTION(BlueprintPure)
+	bool IsTeleporting() { return CurrentCustomMovementMode != ECustomMovementModes::MOVE_Teleporting; }
 
 	/**
 	 * Called when the character has given damage to someone else
@@ -116,6 +130,12 @@ protected:
 	// Called via input once the swap weapon key isn't pressed
 	void SelectWeaponEnd();
 
+	// Called via input to try to activate a teleporter
+	void ActivateTeleporter();
+
+	// Called via Teleporter Subsystem callback once the teleporter is finished
+	void OnTeleporterFinished();
+
 	// Called via input to open the pause HUD
 	void OpenPauseHUD();
 
@@ -168,6 +188,14 @@ private:
 	// Inventory
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
 	class UInventoryComponent* Inventory;
+
+	// Mask to apply to the player when they're stunned
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Config, meta = (AllowPrivateAccess = "true"))
+	class UInputMaskInfo* StunMask;
+
+	// Current custom movement
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	ECustomMovementModes CurrentCustomMovementMode = ECustomMovementModes::MOVE_None;
 
 	// Amount of kills
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, SaveGame, meta = (AllowPrivateAccess = "true"))

@@ -15,6 +15,7 @@
 const float URCStatics::TriggerStatusHalfMin = 0.3f;
 const float URCStatics::TriggerStatusFullMin = 0.75f;
 
+const FName URCStatics::Trigger_ProfileName = FName(TEXT("Trigger"));
 const FName URCStatics::BlockAllButPlayer_ProfileName = FName(TEXT("BlockAllButPlayer"));
 const FName URCStatics::Collectible_ProfileName = FName(TEXT("Collectible"));
 const FName URCStatics::CollectiblePre_ProfileName = FName(TEXT("CollectiblePre"));
@@ -54,4 +55,18 @@ TSharedPtr<FStreamableHandle> URCStatics::LoadPrimaryAsset(const FPrimaryAssetId
 {
 	UAssetManager* Manager = UAssetManager::GetIfValid();
 	return Manager != nullptr ? Manager->LoadPrimaryAsset(AssetId, TArray<FName>(), MoveTemp(DelegateToCall)) : nullptr;
+}
+
+// Keep the camera in place
+void URCStatics::LockCamera(const UObject* WorldContextObject, bool bLock)
+{
+	APlayerCameraManager* CamMan = UGameplayStatics::GetPlayerCameraManager(WorldContextObject, 0);
+	if (CamMan == nullptr)
+	{
+		return;
+	}
+
+	// Need to set the view target and lock outgoing to keep the camera in place
+	CamMan->BlendParams.bLockOutgoing = bLock;
+	CamMan->PendingViewTarget.Target = bLock ? static_cast<AActor*>(CamMan) : static_cast<AActor*>(UGameplayStatics::GetPlayerPawn(WorldContextObject, 0));
 }

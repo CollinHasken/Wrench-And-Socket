@@ -24,6 +24,18 @@ public:
 	FStreamableManager AssetLoader;
 
 	// Curve to dilate time during a level up
-	UPROPERTY(EditAnywhere, Category = LODSetting)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Level)
 	class UCurveFloat* LevelDilationCurve;
+
+	// Curve for rotating the player's camera towards the teleporter
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Teleporter)
+	class UCurveFloat* MovingTeleporterRotateCurve;
+
+	// Curve for transforming moving teleporter during the grow state
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Teleporter)
+	class UCurveFloat* MovingTeleporterGrowCurve;
+
+	// Curve for transforming moving teleporter during the move state
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Teleporter)
+	class UCurveFloat* MovingTeleporterMoveCurve;
 };
