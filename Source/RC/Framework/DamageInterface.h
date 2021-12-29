@@ -25,5 +25,12 @@ class RC_API IDamageInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+	/**
+	 * Request for this interface to be damaged
+	 * @param Params	The request params
+	 */
 	virtual void RequestDamage(FDamageRequestParams& Params) = 0;
+	
+	// Is the interface dead
+	virtual bool IsDead() const = 0;
 };

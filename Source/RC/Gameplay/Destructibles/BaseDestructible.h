@@ -21,11 +21,16 @@ public:
 	// Save destructible status
 	void Serialize(FArchive& Ar) override;
 
+	// Begin IDamageInterface
 	/**
 	 * Request for this character to be damaged
 	 * @param Params	The request params
 	 */
 	void RequestDamage(FDamageRequestParams& Params) override;
+
+	// Is the destructible destroyed
+	bool IsDead() const override;
+	// End IDamageInterface
 
 	// The destructible only saves itself once destroyed
 	bool ActorNeedsSaving_Implementation() override { return false; }

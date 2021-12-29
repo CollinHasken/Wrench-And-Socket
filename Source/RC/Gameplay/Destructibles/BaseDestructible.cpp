@@ -42,3 +42,9 @@ void ABaseDestructible::RequestDamage(FDamageRequestParams& Params)
 	 */
 	Destructible->ApplyHit();
 }
+
+// Is the destructible destroyed
+bool ABaseDestructible::IsDead() const
+{
+	return Destructible->IsDestroyed();
+}

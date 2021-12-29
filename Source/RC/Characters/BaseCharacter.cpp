@@ -81,6 +81,12 @@ void ABaseCharacter::RequestDamage(FDamageRequestParams& Params)
 	}	
 }
 
+// Is the character dead
+bool ABaseCharacter::IsDead() const
+{
+	return Health->IsDead();
+}
+
 // Called when the character dies
 void ABaseCharacter::OnActorDied(AActor* Actor)
 {

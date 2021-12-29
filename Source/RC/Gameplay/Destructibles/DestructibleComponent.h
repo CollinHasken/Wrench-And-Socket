@@ -20,6 +20,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplyHit();
 
+	// Has the destructible been destroyed
+	UFUNCTION(BlueprintPure)
+	bool IsDestroyed() const { return bIsDestroyed; }
+
 protected:
 	void BeginPlay() override;
 

@@ -24,11 +24,16 @@ public:
 	// Save character's data
 	virtual void Serialize(FArchive& Ar) override;
 
+	// Begin IDamageInterface
 	/**
 	 * Request for this character to be damaged
 	 * @param Params	The request params
 	 */
 	void RequestDamage(FDamageRequestParams& Params) override;
+
+	// Is the character dead
+	bool IsDead() const override;
+	// End IDamageInterface
 
 	/**
 	 * Called when the character has given damage to someone else
