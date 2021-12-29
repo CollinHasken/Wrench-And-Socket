@@ -66,7 +66,6 @@ void ARCGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewP
 			{
 				Player->SetActorTransform(CheckpointTransform, false, nullptr, ETeleportType::ResetPhysics);
 
-				// Rotate camera towards checkpoint
 				AController* Controller = Player->GetController();
 				ASSERT(Controller != nullptr);
 				if (Controller != nullptr)
